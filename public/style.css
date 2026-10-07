@@ -2519,6 +2519,44 @@ select:-webkit-autofill {
   background: #111827;
 }
 
+/* Auth Context Banner (When prompted by an action like Post Ad, Chat, or Favorite) */
+.auth-context-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 18px;
+  animation: authBannerFade 0.25s ease-out;
+}
+
+.auth-context-banner i {
+  color: #3b82f6;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .auth-context-banner {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1e40af !important;
+}
+
+[data-theme="light"] .auth-context-banner i {
+  color: #2563eb !important;
+}
+
+@keyframes authBannerFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .auth-tabs {
   display: flex;
   background: #0b0f19;

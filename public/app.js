@@ -1089,6 +1089,12 @@ class MarketplaceApp {
     // 0. Hata uyarı kutularını ve kırmızı çerçeveleri temizle
     this.clearAuthAlerts();
 
+    const banner = document.getElementById('authContextBanner');
+    if (banner) {
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+    }
+
     // 1. Giriş ve Kayıt formlarını sıfırla
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -1167,12 +1173,25 @@ class MarketplaceApp {
     this.resetTurnstile();
   }
 
-  openAuthModal(tab = 'login', returnAction = null) {
+  openAuthModal(tab = 'login', returnAction = null, contextMessage = null) {
+    // 1. Anasayfa arka planında kalmış bildirimleri temizle
+    const homeToasts = document.getElementById('toastContainer');
+    if (homeToasts) homeToasts.innerHTML = '';
+
     if (returnAction !== null && returnAction !== undefined) {
       this.authReturnAction = returnAction;
     }
     this.resetAuthForms();
     this.switchAuthTab(tab);
+
+    if (contextMessage) {
+      const banner = document.getElementById('authContextBanner');
+      if (banner) {
+        banner.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${this.escapeHtml(contextMessage)}</span>`;
+        banner.style.display = 'flex';
+      }
+    }
+
     const modal = document.getElementById('authModal');
     if (modal) modal.showModal();
   }
@@ -1191,7 +1210,7 @@ class MarketplaceApp {
   }
 
   switchAuthTab(tab) {
-    this.resetAuthForms();
+    this.clearAuthAlerts();
 
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -2303,8 +2322,7 @@ class MarketplaceApp {
     if (event) event.stopPropagation();
 
     if (!this.currentUser) {
-      this.showToast('Favorilere eklemek için lütfen giriş yapın.', 'info');
-      this.openAuthModal('login', { type: 'favorite', productId });
+      this.openAuthModal('login', { type: 'favorite', productId }, 'Favorilere eklemek için lütfen önce giriş yapın veya hesap oluşturun.');
       return;
     }
 
@@ -2381,8 +2399,7 @@ class MarketplaceApp {
      ========================================================================== */
   openNewProductModal(returnTarget = null) {
     if (!this.currentUser) {
-      this.showToast('İlan vermek için lütfen önce giriş yapın.', 'info');
-      this.openAuthModal('login', 'newProduct');
+      this.openAuthModal('login', 'newProduct', 'İlan vermek için lütfen önce giriş yapın veya hesap oluşturun.');
       return;
     }
     if (returnTarget !== null && returnTarget !== undefined) {
@@ -2675,8 +2692,7 @@ class MarketplaceApp {
      ========================================================================== */
   openChatModalFromProduct(isOffer = false) {
     if (!this.currentUser) {
-      this.showToast('Mesajlaşmak için lütfen giriş yapın.', 'info');
-      this.openAuthModal('login', { type: 'chat', productId: this.currentDetailProduct ? this.currentDetailProduct.id : null });
+      this.openAuthModal('login', { type: 'chat', productId: this.currentDetailProduct ? this.currentDetailProduct.id : null }, 'Satıcıyla mesajlaşmak için lütfen önce giriş yapın veya hesap oluşturun.');
       return;
     }
 
@@ -3223,7 +3239,7 @@ class MarketplaceApp {
      ========================================================================== */
   async openMessagesModal() {
     if (!this.currentUser) {
-      this.openAuthModal('login', 'messages');
+      this.openAuthModal('login', 'messages', 'Mesajlarınızı ve pazarlıklarınızı görüntülemek için lütfen giriş yapın.');
       return;
     }
 
@@ -3234,8 +3250,7 @@ class MarketplaceApp {
 
       if (res.status === 401) {
         this.logout();
-        this.showToast('Oturum süreniz dolmuş, lütfen tekrar giriş yapın.', 'info');
-        this.openAuthModal('login', 'messages');
+        this.openAuthModal('login', 'messages', 'Oturum süreniz dolmuş, lütfen tekrar giriş yapın.');
         return;
       }
 
@@ -3336,7 +3351,7 @@ class MarketplaceApp {
      ========================================================================== */
   async openFavoritesModal() {
     if (!this.currentUser) {
-      this.openAuthModal('login', 'favorites');
+      this.openAuthModal('login', 'favorites', 'Favori ilanlarınızı görüntülemek için lütfen giriş yapın.');
       return;
     }
 
@@ -3347,8 +3362,7 @@ class MarketplaceApp {
 
       if (res.status === 401) {
         this.logout();
-        this.showToast('Oturum süreniz dolmuş, lütfen tekrar giriş yapın.', 'info');
-        this.openAuthModal('login', 'favorites');
+        this.openAuthModal('login', 'favorites', 'Oturum süreniz dolmuş, lütfen tekrar giriş yapın.');
         return;
       }
 
@@ -3404,8 +3418,7 @@ class MarketplaceApp {
         localStorage.removeItem('alsat_token');
         localStorage.removeItem('alsat_user');
         this.updateAuthUI();
-        this.showToast('Oturum süreniz dolmuş veya sunucu yenilenmiş. Lütfen tekrar giriş yapınız.', 'warning');
-        this.openAuthModal('login', 'profile');
+        this.openAuthModal('login', 'profile', 'Oturum süreniz dolmuş veya sunucu yenilenmiş. Lütfen tekrar giriş yapınız.');
         return;
       }
     } catch (e) {

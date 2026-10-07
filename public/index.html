@@ -516,6 +516,9 @@
     <div class="dialog-content">
       <button class="dialog-close-btn" onclick="app.closeAuthModal()"><i class="fa-solid fa-xmark"></i></button>
       
+      <!-- Context Banner (e.g. "İlan vermek için lütfen önce giriş yapın") -->
+      <div id="authContextBanner" class="auth-context-banner" style="display:none;"></div>
+
       <div class="auth-tabs">
         <button class="auth-tab-btn active" id="tabLoginBtn" onclick="app.switchAuthTab('login')">Giriş Yap</button>
         <button class="auth-tab-btn" id="tabRegisterBtn" onclick="app.switchAuthTab('register')">Hesap Oluştur</button>
