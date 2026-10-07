@@ -1,0 +1,19 @@
+{
+  "name": "sell-zone",
+  "version": "1.0.0",
+  "description": "Sell Zone - Hızlı Sat, Akıllı Al | Modern İkinci El & Sıfır Pazaryeri",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.14"
+  }
+}

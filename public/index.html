@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Sell Zone - Hızlı Sat, Akıllı Al | İkinci El & Sıfır Pazaryeri</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <!-- Cloudflare Turnstile (DDoS & Smart Bot Protection) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <!-- Ambient Animated Marketplace Background with Calming Purple Waves -->
+  <div class="market-bg-container" aria-hidden="true">
+    <div class="purple-waves-canvas">
+      <!-- Soft Ambient Purple Glow Meshes -->
+      <div class="purple-wave-glow glow-top-left"></div>
+      <div class="purple-wave-glow glow-top-right"></div>
+      <div class="purple-wave-glow glow-bottom-center"></div>
+
+      <!-- Silky Flowing Wave Ribbons -->
+      <div class="purple-ribbon ribbon-1"></div>
+      <div class="purple-ribbon ribbon-2"></div>
+      <div class="purple-ribbon ribbon-3"></div>
+
+      <!-- Layer 1: Üst Akış Dalgası (Top Flowing Wave) -->
+      <div class="purple-wave-layer wave-layer-top">
+        <svg class="purple-wave-svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+          <path class="wave-path path-1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,138.7C672,149,768,203,864,208C960,213,1056,171,1152,149.3C1248,128,1344,128,1392,128L1440,128L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
+        </svg>
+      </div>
+
+      <!-- Layer 2: Orta Eğimli Yumuşak Dalga (Middle Curving Wave) -->
+      <div class="purple-wave-layer wave-layer-middle">
+        <svg class="purple-wave-svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+          <path class="wave-path path-2" d="M0,192L60,181.3C120,171,240,149,360,160C480,171,600,213,720,208C840,203,960,149,1080,138.7C1200,128,1320,160,1380,176L1440,192L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"></path>
+        </svg>
+      </div>
+
+      <!-- Layer 3: Alt Ufuk Dalgası (Bottom Horizon Wave) -->
+      <div class="purple-wave-layer wave-layer-bottom">
+        <svg class="purple-wave-svg" viewBox="0 0 1440 340" preserveAspectRatio="none">
+          <path class="wave-path path-3" d="M0,160L48,176C96,192,192,224,288,208C384,192,480,128,576,117.3C672,107,768,149,864,176C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,340L1392,340C1344,340,1248,340,1152,340C1056,340,960,340,864,340C768,340,672,340,576,340C480,340,384,340,288,340C192,340,96,340,48,340L0,340Z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Floating Marketplace Badges -->
+    <div class="floating-badge badge-pos-1"><i class="fa-solid fa-bolt"></i> Hızlı Satış</div>
+    <div class="floating-badge badge-pos-2"><i class="fa-solid fa-handshake"></i> Güvenli Pazarlık</div>
+    <div class="floating-badge badge-pos-3"><i class="fa-solid fa-tags"></i> Uygun Fiyat</div>
+    <div class="floating-badge badge-pos-4"><i class="fa-solid fa-shield-halved"></i> Doğrulanmış Satıcı</div>
+  </div>
+
+  <!-- Header / Navbar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-area" onclick="app.resetFilters()">
+        <div class="brand-logo">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Sell<span>Zone</span></span>
+        </div>
+      </div>
+
+      <!-- Search & Location in Header -->
+      <div class="search-bar-header" id="searchBarHeader">
+        <button type="button" class="location-select-btn" id="headerLocationBtn" onclick="app.toggleCityDropdown(event)" title="Şehir Seç (Tüm Türkiye)" aria-expanded="false" aria-haspopup="true">
+          <i class="fa-solid fa-location-dot loc-icon"></i>
+          <span class="location-btn-text" id="selectedCityLabel">Tüm Türkiye</span>
+          <i class="fa-solid fa-chevron-down loc-chevron"></i>
+        </button>
+        <input type="hidden" id="locationFilter" value="">
+        <div class="search-input-wrap">
+          <i class="fa-solid fa-magnifying-glass search-leading-icon"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Araba, telefon, matkap, koltuk ne arıyorsun?..." 
+            autocomplete="off"
+            oninput="app.handleSearchInput(event)"
+            onfocus="app.handleSearchInputFocus()"
+            onkeydown="app.handleSearchKeyDown(event)"
+          >
+          <button type="button" class="search-clear-btn" id="searchClearBtn" onclick="app.clearSearchInput()" style="display:none;" title="Aramayı Temizle">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <button type="button" class="search-btn" onclick="app.applyFilters()">Ara</button>
+        </div>
+
+        <!-- LIVE SEARCH SUGGESTIONS DROPDOWN (AUTOCOMPLETE) -->
+        <div id="searchSuggestionsDropdown" class="search-suggestions-dropdown" style="display: none;" onclick="event.stopPropagation()">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <!-- NEW MODERN FLOATING CITY DROPDOWN POPOVER -->
+        <div id="cityDropdownPopover" class="city-dropdown-popover" style="display: none;" onclick="event.stopPropagation()">
+          <div class="city-popover-header">
+            <div class="city-popover-title-group">
+              <div class="city-popover-badge">
+                <i class="fa-solid fa-location-crosshairs"></i>
+              </div>
+              <div class="city-popover-headings">
+                <h4>Şehir Filtresi</h4>
+                <p>İlanları şehirlere göre listele</p>
+              </div>
+            </div>
+            <button type="button" class="city-popover-close-btn" onclick="app.closeCityDropdown()" title="Kapat">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Quick All Turkey Reset Button -->
+          <button type="button" class="popover-all-turkey-btn active" id="popoverAllTurkeyBtn" onclick="app.selectCity('')">
+            <div class="popover-all-left">
+              <div class="popover-all-icon">
+                <i class="fa-solid fa-earth-europe"></i>
+              </div>
+              <div class="popover-all-text">
+                <span class="popover-all-title">Tüm Türkiye</span>
+                <span class="popover-all-sub">Ülke genelindeki tüm ilanları göster</span>
+              </div>
+            </div>
+            <i class="fa-solid fa-check popover-check-mark"></i>
+          </button>
+
+          <!-- Live City Search -->
+          <div class="city-popover-search">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input 
+              type="text" 
+              id="cityPopoverSearchInput" 
+              placeholder="Şehir adı yazarak hemen bul..." 
+              autocomplete="off"
+              oninput="app.handleCityPopoverSearch(this.value)"
+            >
+            <button type="button" class="city-popover-clear-btn" id="cityPopoverClearBtn" onclick="app.clearCityPopoverSearch()" style="display:none;" title="Temizle">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Region Filter Tabs -->
+          <div class="city-region-tabs-bar" id="cityRegionTabs">
+            <button type="button" class="city-region-tab active" data-region="all" onclick="app.filterCitiesByRegion('all')">Tümü</button>
+            <button type="button" class="city-region-tab" data-region="popular" onclick="app.filterCitiesByRegion('popular')">Popüler</button>
+            <button type="button" class="city-region-tab" data-region="marmara" onclick="app.filterCitiesByRegion('marmara')">Marmara</button>
+            <button type="button" class="city-region-tab" data-region="ege" onclick="app.filterCitiesByRegion('ege')">Ege</button>
+            <button type="button" class="city-region-tab" data-region="ic_anadolu" onclick="app.filterCitiesByRegion('ic_anadolu')">İç Anadolu</button>
+            <button type="button" class="city-region-tab" data-region="akdeniz" onclick="app.filterCitiesByRegion('akdeniz')">Akdeniz</button>
+            <button type="button" class="city-region-tab" data-region="karadeniz" onclick="app.filterCitiesByRegion('karadeniz')">Karadeniz</button>
+            <button type="button" class="city-region-tab" data-region="dogu" onclick="app.filterCitiesByRegion('dogu')">Doğu</button>
+            <button type="button" class="city-region-tab" data-region="guneydogu" onclick="app.filterCitiesByRegion('guneydogu')">Güneydoğu</button>
+          </div>
+
+          <!-- Cities List / Grid Scrollable Container -->
+          <div class="city-popover-body">
+            <div class="city-popover-grid" id="cityPopoverGrid">
+              <!-- Rendered via JavaScript -->
+            </div>
+            <div class="city-popover-empty" id="cityPopoverEmpty" style="display:none;">
+              <i class="fa-solid fa-location-slash"></i>
+              <p>Eşleşen şehir bulunamadı</p>
+              <span>Farklı bir arama yapmayı deneyin.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons (Sağ Üst Navigasyon ve Buton Grubu) -->
+      <div class="header-actions">
+        <!-- Quick Nav Cluster: Favoriler & Mesajlar -->
+        <div class="header-nav-cluster">
+          <button class="header-nav-icon-btn" onclick="app.openFavoritesModal()" title="Favori İlanlarım" id="headerFavBtn">
+            <i class="fa-solid fa-heart"></i>
+            <span class="badge-counter" id="headerFavBadge" style="display:none;">0</span>
+          </button>
+          
+          <button class="header-nav-icon-btn" onclick="app.openMessagesModal()" title="Mesajlarım & Pazarlıklar" id="headerMsgBtn">
+            <i class="fa-solid fa-comments"></i>
+            <span class="badge-counter" id="headerMsgBadge" style="display:none;">0</span>
+          </button>
+        </div>
+
+        <!-- Tema Değiştirme Butonu (Karanlık / Aydınlık Mod) -->
+        <button class="header-nav-icon-btn theme-toggle-btn" onclick="app.toggleTheme()" title="Aydınlık Moda Geç" id="themeToggleBtn" aria-label="Temayı Değiştir">
+          <i class="fa-solid fa-moon" id="themeToggleIcon"></i>
+        </button>
+
+        <div class="header-v-divider" aria-hidden="true"></div>
+
+        <!-- Auth state (Profil Kartı veya Giriş Yap) -->
+        <div id="authActionsContainer" class="auth-actions-wrap">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Create Listing CTA -->
+        <button class="btn btn-sell-cta" onclick="app.openNewProductModal()" title="Hemen İlan Ver">
+          <i class="fa-solid fa-plus"></i>
+          <span>İlan Ver</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-content">
+
+    <!-- Top Access Bar: Hızlı Test Girişi & Canlı İstatistikler -->
+    <section class="top-bar-section">
+      <div class="top-bar-container">
+        <!-- Quick Demo Switcher helper bar -->
+        <div class="demo-account-bar">
+          <span class="demo-label"><i class="fa-solid fa-user-gear"></i> Hızlı Test Girişi:</span>
+          <div id="demoUsersList" class="demo-chips">
+            <!-- Populated via API -->
+          </div>
+        </div>
+
+        <!-- Mini Stats Counter Strip -->
+        <div class="mini-stats-strip" id="statsStrip">
+          <div class="mini-stat-item" title="Aktif İlan">
+            <i class="fa-solid fa-tags text-coral"></i>
+            <span class="stat-number" id="statProducts">--</span>
+            <span class="mini-stat-label">İlan</span>
+          </div>
+          <div class="mini-stat-dot">•</div>
+          <div class="mini-stat-item" title="Kayıtlı Kullanıcı">
+            <i class="fa-solid fa-users text-amber"></i>
+            <span class="stat-number" id="statUsers">--</span>
+            <span class="mini-stat-label">Üye</span>
+          </div>
+          <div class="mini-stat-dot">•</div>
+          <div class="mini-stat-item" title="Pazarlık & Mesaj">
+            <i class="fa-solid fa-comments text-sky"></i>
+            <span class="stat-number" id="statMessages">--</span>
+            <span class="mini-stat-label">Mesaj</span>
+          </div>
+          <div class="mini-stat-dot">•</div>
+          <div class="mini-stat-item" title="Farklı Şehir">
+            <i class="fa-solid fa-map-location-dot text-emerald"></i>
+            <span class="stat-number" id="statCities">--</span>
+            <span class="mini-stat-label">Şehir</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section">
+      <div class="section-header">
+        <h2 class="section-title">Kategorileri Keşfet</h2>
+        <span class="section-subtitle">Aklına gelebilecek her şey için bir kategori var</span>
+      </div>
+      <div class="categories-scroll-wrapper" id="categoriesContainer">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- Listings & Filter Section -->
+    <section class="listings-section">
+      <div class="listings-toolbar">
+        <div class="toolbar-left">
+          <h2 class="section-title" id="listingsTitle">Tüm İlanlar</h2>
+          <span class="items-count-badge" id="listingsCount">Yükleniyor...</span>
+        </div>
+        
+        <div class="toolbar-right">
+          <!-- Condition Filter -->
+          <div class="filter-select-wrap">
+            <label for="conditionFilter"><i class="fa-solid fa-sparkles"></i></label>
+            <select id="conditionFilter" onchange="app.handleFilterChange()">
+              <option value="">Tüm Durumlar</option>
+              <option value="Sıfır / Kutusunda">Sıfır / Kutusunda</option>
+              <option value="Yeni Gibi">Yeni Gibi</option>
+              <option value="İyi Durumda">İyi Durumda</option>
+              <option value="Az Kullanılmış">Az Kullanılmış</option>
+            </select>
+          </div>
+
+          <!-- Sort Filter -->
+          <div class="filter-select-wrap">
+            <label for="sortFilter"><i class="fa-solid fa-arrow-down-short-wide"></i></label>
+            <select id="sortFilter" onchange="app.handleFilterChange()">
+              <option value="newest">En Yeniler</option>
+              <option value="price_asc">Fiyat: Düşükten Yükseğe</option>
+              <option value="price_desc">Fiyat: Yüksekten Düşüğe</option>
+              <option value="popular">En Çok İncelenen</option>
+            </select>
+          </div>
+
+          <!-- Price Range Button/Toggle -->
+          <button class="btn btn-outline" onclick="app.togglePriceFilterModal()">
+            <i class="fa-solid fa-sliders"></i> Fiyat Filtresi
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Filter Tags (if any) -->
+      <div class="active-filter-tags" id="activeFilterTags" style="display:none;"></div>
+
+      <!-- Product Cards Grid -->
+      <div class="products-grid" id="productsGrid">
+        <!-- Injected by JavaScript -->
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+        <h3>Aradığın kriterlere uygun ilan bulunamadı</h3>
+        <p>Arama filtreni temizleyebilir veya farklı bir arama terimi deneyebilirsin.</p>
+        <button class="btn btn-primary" onclick="app.resetFilters()">Filtreleri Temizle</button>
+      </div>
+    </section>
+
+    <!-- Footer with Cloudflare Security Status -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <div class="brand-logo-small"><i class="fa-solid fa-cube"></i></div>
+          <span>Sell<strong>Zone</strong> • Hızlı Sat, Akıllı Al</span>
+        </div>
+        <div class="footer-center">
+          <div class="cf-security-pill" id="footerCfStatus" title="Cloudflare DDoS & WAF Koruma Durumu">
+            <i class="fa-brands fa-cloudflare text-orange"></i>
+            <span id="cfStatusText">Cloudflare Koruma Sistemi Aktif</span>
+            <span class="cf-pulse-dot"></span>
+          </div>
+        </div>
+        <div class="footer-right">
+          <span>© 2026 SellZone. Güvenli Alışveriş Bölgesi</span>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav">
+    <button class="nav-btn active" onclick="app.resetFilters()">
+      <i class="fa-solid fa-house"></i>
+      <span>Ana Sayfa</span>
+    </button>
+    <button class="nav-btn" onclick="app.openFavoritesModal()">
+      <div class="nav-icon-wrapper" style="position:relative; display:inline-flex;">
+        <i class="fa-solid fa-heart"></i>
+        <span class="badge-counter" id="mobileFavBadge" style="display:none; position:absolute; top:-6px; right:-10px;">0</span>
+      </div>
+      <span>Favoriler</span>
+    </button>
+    <button class="nav-btn nav-btn-sell" onclick="app.openNewProductModal()">
+      <div class="sell-icon-bubble"><i class="fa-solid fa-plus"></i></div>
+      <span>İlan Ver</span>
+    </button>
+    <button class="nav-btn" onclick="app.openMessagesModal()">
+      <div class="nav-icon-wrapper" style="position:relative; display:inline-flex;">
+        <i class="fa-solid fa-comment-dots"></i>
+        <span class="badge-counter" id="mobileMsgBadge" style="display:none; position:absolute; top:-6px; right:-10px;">0</span>
+      </div>
+      <span>Mesajlar</span>
+    </button>
+    <button class="nav-btn" onclick="app.openProfileOrLoginModal()">
+      <i class="fa-solid fa-user"></i>
+      <span>Hesabım</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. Product Detail Modal -->
+  <dialog id="productDetailModal" class="app-dialog product-modal">
+    <div class="dialog-content">
+      <button class="dialog-close-btn" onclick="app.closeProductDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="product-modal-grid">
+        <!-- Gallery -->
+        <div class="modal-gallery">
+          <div class="gallery-main-view">
+            <img id="modalMainImg" src="" alt="Ürün Fotoğrafı">
+            <button class="fav-overlay-btn" id="modalFavBtn" onclick="app.toggleCurrentProductFavorite()">
+              <i class="fa-solid fa-heart"></i>
+            </button>
+            <div class="gallery-condition-tag" id="modalConditionTag">Yeni Gibi</div>
+          </div>
+          <div class="gallery-thumbnails" id="modalThumbnails">
+            <!-- Thumbnails rendered here -->
+          </div>
+        </div>
+
+        <!-- Details Info -->
+        <div class="modal-info-panel">
+          <div class="modal-top-badges">
+            <span class="category-pill" id="modalCategoryPill"><i class="fa-solid fa-tag"></i> Elektronik</span>
+            <span class="views-badge" id="modalViewsBadge"><i class="fa-solid fa-eye"></i> 142 görüntülenme</span>
+          </div>
+
+          <h2 class="modal-product-title" id="modalTitle">Ürün Başlığı</h2>
+          
+          <div class="modal-price-row">
+            <div class="modal-price" id="modalPrice">0 ₺</div>
+            <div class="modal-location" id="modalLocation"><i class="fa-solid fa-location-dot"></i> İstanbul</div>
+          </div>
+
+          <div class="modal-description-box">
+            <h4>Açıklama</h4>
+            <p id="modalDescription">Açıklama metni...</p>
+          </div>
+
+          <!-- Seller Info Box -->
+          <div class="seller-card">
+            <img id="modalSellerAvatar" src="" alt="Satıcı" class="seller-avatar">
+            <div class="seller-meta">
+              <div class="seller-name-row">
+                <span class="seller-name" id="modalSellerName">Satıcı Adı</span>
+                <span class="seller-rating" id="modalSellerRating"><i class="fa-solid fa-star"></i> 5.0</span>
+              </div>
+              <div class="seller-subinfo" id="modalSellerSubinfo">
+                <span><i class="fa-solid fa-clock"></i> Üyelik Tarihi: 2026</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions: Chat, Offer, Phone, Owner actions -->
+          <div class="modal-actions-group" id="modalActionsGroup">
+            <!-- Rendered dynamically depending on if owner or buyer -->
+          </div>
+
+          <!-- Seller Other Products -->
+          <div class="seller-other-section" id="sellerOtherSection">
+            <h4>Satıcının Diğer İlanları</h4>
+            <div class="seller-other-grid" id="sellerOtherGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 2. Create Listing Modal -->
+  <dialog id="newProductModal" class="app-dialog form-modal">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <div class="modal-title-wrap">
+          <div class="icon-circle"><i class="fa-solid fa-camera"></i></div>
+          <div>
+            <h3>Yeni İlan Ver</h3>
+            <p>Eşyanı hemen fotoğrafla, fiyatını belirle ve dakikalar içinde alıcı bul!</p>
+          </div>
+        </div>
+        <button class="dialog-close-btn" onclick="app.closeNewProductModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="newProductForm" onsubmit="app.handleCreateProduct(event)" class="new-product-form">
+        <!-- Photo Upload Box -->
+        <div class="form-group">
+          <label class="form-label">Ürün Fotoğrafları (En fazla 5 adet)</label>
+          <div class="photo-upload-zone" id="photoDropZone">
+            <input type="file" id="productPhotosInput" multiple accept="image/*" onchange="app.handlePhotoSelection(event)">
+            <div class="upload-placeholder" onclick="document.getElementById('productPhotosInput').click()">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span>Fotoğraf Yüklemek İçin Tıkla veya Sürükle</span>
+              <small>JPEG, PNG, WEBP desteklenir (Maks 10MB)</small>
+            </div>
+            <div class="photo-previews-list" id="photoPreviewsList"></div>
+          </div>
+          <!-- Quick Preset Demo Photos -->
+          <div class="quick-preset-photos">
+            <span>Hızlı Test Fotoğrafları:</span>
+            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('matkap')">Matkap</button>
+            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('telefon')">Telefon</button>
+            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('bisiklet')">Bisiklet</button>
+            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('mobilya')">Mobilya</button>
+            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('gitar')">Müzik</button>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Title -->
+          <div class="form-group col-span-2">
+            <label for="newProdTitle" class="form-label">İlan Başlığı *</label>
+            <input type="text" id="newProdTitle" required placeholder="Örn: Bosch 18V Çantalı Akülü Vidalama Matkap">
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label for="newProdCategory" class="form-label">Kategori *</label>
+            <select id="newProdCategory" required>
+              <!-- Filled via JS -->
+            </select>
+          </div>
+
+          <!-- Price -->
+          <div class="form-group">
+            <label for="newProdPrice" class="form-label">Fiyat (₺) *</label>
+            <div class="input-with-icon">
+              <input type="number" id="newProdPrice" required min="1" step="1" placeholder="Örn: 2750">
+              <span class="input-addon">₺</span>
+            </div>
+          </div>
+
+          <!-- Condition -->
+          <div class="form-group col-span-2">
+            <label for="newProdCondition" class="form-label">Kullanım Durumu *</label>
+            <select id="newProdCondition" required>
+              <option value="Yeni Gibi">Yeni Gibi (Kusursuz)</option>
+              <option value="Sıfır / Kutusunda">Sıfır / Kutusunda (Hiç Açılmamış)</option>
+              <option value="İyi Durumda">İyi Durumda (Normal kullanım izleri)</option>
+              <option value="Az Kullanılmış">Az Kullanılmış</option>
+              <option value="Tamir Gerektirir">Tamir Gerektirir / Parça Niyetine</option>
+            </select>
+          </div>
+
+          <!-- City (İl) Selection -->
+          <div class="form-group">
+            <label for="newProdCity" class="form-label">
+              <i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:4px;"></i> Şehir (İl) *
+            </label>
+            <select id="newProdCity" required onchange="app.handleNewProdCityChange(this.value)">
+              <option value="">Şehir Seçiniz</option>
+            </select>
+          </div>
+
+          <!-- District (İlçe) Selection -->
+          <div class="form-group">
+            <label for="newProdDistrict" class="form-label">
+              <i class="fa-solid fa-map-pin" style="color:var(--primary); margin-right:4px;"></i> İlçe *
+            </label>
+            <select id="newProdDistrict" required disabled>
+              <option value="">Önce Şehir Seçiniz</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="newProdDescription" class="form-label">Açıklama *</label>
+          <textarea id="newProdDescription" rows="4" required placeholder="Ürünün çalışma durumu, yanında verilecek aksesuarları, faturası vb. detayları yazınız..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="app.closeNewProductModal()">Vazgeç</button>
+          <button type="submit" class="btn btn-primary" id="btnPublishListing">
+            <i class="fa-solid fa-check"></i> İlanı Hemen Yayınla
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 3. Auth Modal (Login / Register) -->
+  <dialog id="authModal" class="app-dialog auth-dialog">
+    <div class="dialog-content">
+      <button class="dialog-close-btn" onclick="app.closeAuthModal()"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tabLoginBtn" onclick="app.switchAuthTab('login')">Giriş Yap</button>
+        <button class="auth-tab-btn" id="tabRegisterBtn" onclick="app.switchAuthTab('register')">Hesap Oluştur</button>
+      </div>
+
+      <!-- Quick Demo Login Selection -->
+      <div class="demo-login-box">
+        <div class="demo-box-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Test için Tek Tıkla Giriş Yap:</div>
+        <div class="demo-login-grid" id="modalDemoUsers">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="auth-divider"><span>veya form ile devam et</span></div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="app.handleLogin(event)">
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">E-Posta</label>
+          <input type="email" id="loginEmail" required placeholder="ahmet@alsat.com">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword" class="form-label">Şifre</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="loginPassword" required placeholder="******">
+            <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('loginPassword', this)" title="Şifreyi Göster" tabindex="-1">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cloudflare Turnstile Bot Challenge -->
+        <div class="cf-turnstile-container">
+          <div class="cf-turnstile" id="cfLoginTurnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark" data-size="flexible"></div>
+        </div>
+        <div class="cf-badge-row">
+          <i class="fa-brands fa-cloudflare text-orange"></i>
+          <span>Cloudflare Turnstile ile Bot & DDoS Koruması</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Giriş Yap</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" onsubmit="app.handleRegister(event)" style="display:none;">
+        <div class="form-group">
+          <label for="regName" class="form-label">Ad Soyad</label>
+          <input type="text" id="regName" required placeholder="Osman Demir">
+        </div>
+        <div class="form-group">
+          <label for="regEmail" class="form-label">E-Posta Adresi</label>
+          <input type="email" id="regEmail" required placeholder="osman@ornek.com">
+        </div>
+        <div class="form-group">
+          <label for="regPhone" class="form-label">Telefon (İsteğe Bağlı)</label>
+          <input type="tel" id="regPhone" placeholder="05XX XXX XX XX">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="regCity" class="form-label">
+              <i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:4px;"></i> Şehir (İl) *
+            </label>
+            <select id="regCity" required onchange="app.handleRegCityChange(this.value)">
+              <option value="">İl Seçiniz</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="regDistrict" class="form-label">
+              <i class="fa-solid fa-map-pin" style="color:var(--primary); margin-right:4px;"></i> İlçe *
+            </label>
+            <select id="regDistrict" required disabled>
+              <option value="">Önce İl Seçiniz</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="regPassword" class="form-label">Şifre</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="regPassword" required placeholder="En az 6 karakter">
+            <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('regPassword', this)" title="Şifreyi Göster" tabindex="-1">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cloudflare Turnstile Bot Challenge -->
+        <div class="cf-turnstile-container">
+          <div class="cf-turnstile" id="cfRegisterTurnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark" data-size="flexible"></div>
+        </div>
+        <div class="cf-badge-row">
+          <i class="fa-brands fa-cloudflare text-orange"></i>
+          <span>Cloudflare Turnstile ile Bot & DDoS Koruması</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="btnRegisterSubmit">
+          <i class="fa-solid fa-paper-plane"></i> Doğrulama Kodu Gönder
+        </button>
+      </form>
+
+      <!-- Email Verification Step View -->
+      <div id="emailVerifyView" style="display:none;" class="verify-step-container">
+        <div class="verify-badge-header">
+          <div class="verify-icon-bubble">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+          </div>
+          <h3>E-Posta Doğrulama</h3>
+          <p class="verify-desc">
+            <span id="verifyTargetEmail" class="highlight-email">ornek@email.com</span> adresine <strong>SellZone</strong> tarafından 6 haneli güvenlik kodu gönderildi.
+          </p>
+        </div>
+
+        <!-- Dev Mode Simulated Code Banner -->
+        <div id="devCodeBanner" class="dev-code-box" style="display:none;">
+          <div class="dev-code-title"><i class="fa-solid fa-flask"></i> Test Modu (Simülasyon Kodu):</div>
+          <div class="dev-code-val" id="devCodeValue">123456</div>
+          <small>SMTP ayarı yapılmadığında kod burada ve sunucu konsolunda görünür.</small>
+        </div>
+
+        <div class="form-group otp-group">
+          <label class="form-label text-center">6 Haneli Doğrulama Kodunu Giriniz</label>
+          <div class="otp-inputs-row" id="otpInputsRow">
+            <input type="text" maxlength="1" inputmode="numeric" class="otp-box" data-idx="0" autocomplete="off" />
+            <input type="text" maxlength="1" inputmode="numeric" class="otp-box" data-idx="1" autocomplete="off" />
+            <input type="text" maxlength="1" inputmode="numeric" class="otp-box" data-idx="2" autocomplete="off" />
+            <input type="text" maxlength="1" inputmode="numeric" class="otp-box" data-idx="3" autocomplete="off" />
+            <input type="text" maxlength="1" inputmode="numeric" class="otp-box" data-idx="4" autocomplete="off" />
+            <input type="text" maxlength="1" inputmode="numeric" class="otp-box" data-idx="5" autocomplete="off" />
+          </div>
+          <input type="hidden" id="fullOtpCode" value="" />
+        </div>
+
+        <div class="verify-timer-row">
+          <span><i class="fa-regular fa-clock"></i> Kod Geçerlilik Süresi: <strong id="verifyCountdown">10:00</strong></span>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block btn-verify" id="btnVerifySubmit" onclick="app.submitEmailVerification()">
+          <i class="fa-solid fa-shield-check"></i> Doğrula ve Hesabı Aç
+        </button>
+
+        <div class="verify-actions-row">
+          <button type="button" class="btn-link" id="btnResendCode" onclick="app.resendVerificationCode()">
+            <i class="fa-solid fa-rotate-right"></i> Kodu Tekrar Gönder <span id="resendTimerText"></span>
+          </button>
+          <button type="button" class="btn-link text-muted" onclick="app.backToRegisterForm()">
+            <i class="fa-solid fa-arrow-left"></i> Bilgileri Düzenle
+          </button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 4. In-App Chat & Bargaining Modal -->
+  <dialog id="chatModal" class="app-dialog chat-dialog">
+    <div class="dialog-content chat-content">
+      <div class="chat-header">
+        <div class="chat-header-user-info">
+          <button type="button" class="chat-back-btn" id="chatBackBtn" onclick="app.closeChatModal()" title="Geri">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div class="chat-user-avatar-wrap">
+            <img id="chatUserAvatar" class="chat-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" alt="Kullanıcı">
+            <span class="chat-user-online-dot" title="Çevrimiçi"></span>
+          </div>
+          <div class="chat-user-details">
+            <div class="chat-user-name-row">
+              <h4 id="chatUserName" class="chat-user-name">Kullanıcı Adı</h4>
+              <span id="chatUserBadge" class="chat-user-badge"><i class="fa-solid fa-circle-check"></i> Onaylı</span>
+            </div>
+            <div class="chat-user-meta-row">
+              <span id="chatUserRole" class="chat-user-role-label">Satıcı</span>
+              <span class="chat-meta-dot">•</span>
+              <span id="chatUserCity" class="chat-user-city-label"><i class="fa-solid fa-location-dot"></i> İstanbul</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-header-right-cluster">
+          <div class="chat-product-brief" id="chatProductBrief" title="İlgili İlanı İncele" onclick="app.openProductFromChat()" style="cursor: pointer;">
+            <img id="chatProductImg" src="" alt="Ürün">
+            <div class="chat-product-brief-text">
+              <h5 id="chatProductTitle">Ürün Adı</h5>
+              <span class="chat-price" id="chatProductPrice">0 ₺</span>
+            </div>
+          </div>
+          <button class="chat-header-close-btn" onclick="app.closeChatModal()" title="Kapat">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div class="chat-messages-body" id="chatMessagesBody">
+        <!-- Messages appended here -->
+      </div>
+
+      <!-- Interactive Bargain & Offer Panel (Slide-up inside Chat) -->
+      <div class="chat-offer-panel" id="chatOfferPanel" style="display: none;">
+        <div class="offer-panel-header">
+          <div class="offer-panel-title">
+            <div class="offer-panel-icon"><i class="fa-solid fa-handshake-angle"></i></div>
+            <div>
+              <h5>Pazarlık & Fiyat Teklifi</h5>
+              <span class="offer-panel-sub" id="offerPanelSub">Satıcıya makul bir teklif gönder</span>
+            </div>
+          </div>
+          <button type="button" class="offer-panel-close-btn" onclick="app.closeOfferPanel()" title="Kapat">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="offer-panel-body">
+          <!-- Reference Price Strip -->
+          <div class="offer-price-reference">
+            <span class="ref-label">İlan Liste Fiyatı:</span>
+            <span class="ref-amount" id="offerPanelOriginalPrice">0 ₺</span>
+          </div>
+
+          <!-- Quick Discount Presets -->
+          <div class="offer-presets-group">
+            <span class="offer-sublabel"><i class="fa-solid fa-bolt text-amber"></i> Hızlı İndirim Seçenekleri:</span>
+            <div class="offer-presets-grid" id="offerPresetsGrid">
+              <!-- Rendered via JS (%5, %10, %15, %20 discount buttons) -->
+            </div>
+          </div>
+
+          <!-- Custom Offer Input with Stepper -->
+          <div class="offer-custom-input-wrap">
+            <label class="offer-sublabel" for="offerAmountInput"><i class="fa-solid fa-coins text-primary"></i> Teklif Tutarı (₺):</label>
+            <div class="offer-stepper-box">
+              <button type="button" class="stepper-btn" onclick="app.stepOfferAmount(-50)" title="-50 ₺">
+                <i class="fa-solid fa-minus"></i>
+              </button>
+              <div class="offer-amount-input-inner">
+                <input 
+                  type="number" 
+                  id="offerAmountInput" 
+                  min="1" 
+                  step="10" 
+                  placeholder="0"
+                  oninput="app.handleOfferAmountInput(this.value)"
+                >
+                <span class="currency-tag">₺</span>
+              </div>
+              <button type="button" class="stepper-btn" onclick="app.stepOfferAmount(50)" title="+50 ₺">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+
+            <!-- Live Savings & Discount Indicator -->
+            <div class="offer-savings-preview" id="offerSavingsPreview" style="display: none;">
+              <span class="savings-badge" id="offerDiscountPercent">-%10</span>
+              <span class="savings-text" id="offerSavingsAmount">200 ₺ daha uygun</span>
+            </div>
+          </div>
+
+          <!-- Quick Message Templates -->
+          <div class="offer-note-templates-wrap">
+            <span class="offer-sublabel"><i class="fa-solid fa-comment-dots"></i> Teklif Notu Ekle (Hızlı Seçim):</span>
+            <div class="offer-note-chips" id="offerNoteChips">
+              <button type="button" class="note-chip" onclick="app.selectOfferNote(this, 'Nakit elden teslim alabilirim.')">💵 Elden Nakit</button>
+              <button type="button" class="note-chip" onclick="app.selectOfferNote(this, 'Bugün gelip teslim alabilirim.')">🚗 Hemen Teslim</button>
+              <button type="button" class="note-chip" onclick="app.selectOfferNote(this, 'Öğrenciyim, bütçem bu kadar.')">🎓 Öğrenciyim</button>
+              <button type="button" class="note-chip" onclick="app.selectOfferNote(this, 'Hemen havale/EFT yapabilirim.')">⚡ Hızlı Ödeme</button>
+            </div>
+            <input 
+              type="text" 
+              id="offerCustomMessage" 
+              class="offer-message-input" 
+              placeholder="Eklemek istediğiniz not veya teklif açıklaması (isteğe bağlı)..."
+            >
+          </div>
+
+          <!-- Submit Offer CTA -->
+          <button type="button" class="btn btn-primary btn-block btn-submit-offer" id="btnSubmitOffer" onclick="app.submitOffer()">
+            <i class="fa-solid fa-handshake"></i>
+            <span id="btnSubmitOfferText">Teklifi Gönder</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Offers Strip -->
+      <div class="quick-offers-strip" id="quickOffersStrip">
+        <div class="quick-offers-left">
+          <i class="fa-solid fa-handshake text-primary"></i>
+          <span>Hızlı Teklif:</span>
+        </div>
+        <div id="quickOfferButtons" class="quick-offers-list"></div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <form class="chat-input-bar" onsubmit="app.handleSendMessage(event)">
+        <input type="text" id="chatInputMessage" placeholder="Satıcıya bir soru sor veya teklif ver..." autocomplete="off">
+        <button type="button" class="btn btn-secondary btn-offer" id="btnChatOffer" onclick="app.toggleOfferPanel()" title="Pazarlık Teklifi Ver">
+          <i class="fa-solid fa-handshake"></i> Teklif
+        </button>
+        <button type="submit" class="btn btn-primary btn-send">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 5. Messages Threads Drawer/Modal -->
+  <dialog id="messagesDrawer" class="app-dialog drawer-dialog">
+    <div class="dialog-content drawer-content">
+      <div class="drawer-header">
+        <h3><i class="fa-solid fa-comments"></i> Mesajlarım & Pazarlıklar</h3>
+        <button class="dialog-close-btn" onclick="app.closeMessagesModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-body" id="threadsListContainer">
+        <!-- List of active chat threads -->
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 6. Favorites Drawer/Modal -->
+  <dialog id="favoritesDrawer" class="app-dialog drawer-dialog">
+    <div class="dialog-content drawer-content">
+      <div class="drawer-header">
+        <h3><i class="fa-solid fa-heart text-coral"></i> Favori İlanlarım</h3>
+        <button class="dialog-close-btn" onclick="app.closeFavoritesModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-body" id="favoritesListContainer">
+        <!-- Favorite items list -->
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 7. Advanced My Profile Modal -->
+  <dialog id="profileDrawer" class="app-dialog profile-modal">
+    <div class="dialog-content profile-dialog-content">
+      <button class="dialog-close-btn" onclick="app.closeProfileDrawer()"><i class="fa-solid fa-xmark"></i></button>
+      
+      <!-- Profile Cover Banner -->
+      <div class="profile-cover-banner">
+        <div class="cover-pattern"></div>
+        <div class="cover-badges-top">
+          <span class="cover-badge"><i class="fa-solid fa-shield-check"></i> Doğrulanmış Profil</span>
+        </div>
+      </div>
+
+      <!-- Profile Header Area -->
+      <div class="profile-header-expanded">
+        <div class="profile-avatar-wrapper" onclick="app.triggerHeaderAvatarUpload()" title="Fotoğrafınızı değiştirmek için tıklayın">
+          <img id="profileUserAvatar" src="" alt="Profil Fotoğrafı" class="profile-avatar-large">
+          <span class="online-status-dot" title="Çevrimiçi"></span>
+          <div class="avatar-edit-overlay-btn" title="Fotoğraf Yükle">
+            <i class="fa-solid fa-camera"></i>
+          </div>
+          <input type="file" id="headerAvatarFileInput" accept="image/*" style="display:none;" onchange="app.handleHeaderAvatarSelected(event)">
+        </div>
+
+        <div class="profile-main-meta">
+          <div class="profile-name-row">
+            <h2 id="profileUserName" class="profile-user-title">Kullanıcı Adı</h2>
+            <div class="profile-rating-pill">
+              <i class="fa-solid fa-star"></i>
+              <span id="profileUserRating">5.0</span>
+              <small id="profileReviewsCount">(14 değerlendirme)</small>
+            </div>
+          </div>
+          <div class="profile-subinfo-row">
+            <span id="profileUserLocation"><i class="fa-solid fa-location-dot"></i> İstanbul, Kadıköy</span>
+            <span>•</span>
+            <span id="profileUserMemberDate"><i class="fa-solid fa-calendar-check"></i> Üye: 2026</span>
+            <span>•</span>
+            <span id="profileUserPhone"><i class="fa-solid fa-phone"></i> 0532 555 12 34</span>
+          </div>
+          <p id="profileUserBio" class="profile-user-bio">Sell Zone pazarında güvenilir alışverişin adresi.</p>
+        </div>
+
+        <div class="profile-header-actions">
+          <button class="btn btn-outline btn-sm" onclick="app.logout()" style="color: var(--danger); border-color: var(--danger);">
+            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+          </button>
+        </div>
+      </div>
+
+      <!-- Trust & Verification Badges -->
+      <div class="trust-badges-bar">
+        <div class="trust-badge-item">
+          <i class="fa-solid fa-circle-check text-success"></i>
+          <span>E-Posta Doğrulandı</span>
+        </div>
+        <div class="trust-badge-item">
+          <i class="fa-solid fa-mobile-screen-button text-success"></i>
+          <span>Telefon Onaylı</span>
+        </div>
+        <div class="trust-badge-item">
+          <i class="fa-solid fa-bolt text-amber"></i>
+          <span>Hızlı Yanıt (1 Saat)</span>
+        </div>
+        <div class="trust-badge-item">
+          <i class="fa-solid fa-medal text-coral"></i>
+          <span>Güvenilir Satıcı</span>
+        </div>
+      </div>
+
+      <!-- KPI Statistics Dashboard Grid -->
+      <div class="profile-kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="color: #60a5fa; background: rgba(59, 130, 246, 0.15);"><i class="fa-solid fa-box-open"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-number" id="kpiActiveCount">0</span>
+            <span class="kpi-label">Yayındaki İlan</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="color: #34d399; background: rgba(16, 185, 129, 0.15);"><i class="fa-solid fa-handshake-angle"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-number" id="kpiSoldCount">0</span>
+            <span class="kpi-label">Satılan Ürün</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="color: #fbbf24; background: rgba(245, 158, 11, 0.15);"><i class="fa-solid fa-eye"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-number" id="kpiViewsCount">0</span>
+            <span class="kpi-label">İlan Görüntüleme</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon-box" style="color: #f472b6; background: rgba(236, 72, 153, 0.15);"><i class="fa-solid fa-comments"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-number" id="kpiChatsCount">0</span>
+            <span class="kpi-label">Görüşülen Alıcı</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="profile-nav-tabs">
+        <button class="profile-nav-btn active" id="profTabListings" onclick="app.switchProfileTab('listings')">
+          <i class="fa-solid fa-layer-group"></i> Yayındaki İlanlarım (<span id="tabCountActive">0</span>)
+        </button>
+        <button class="profile-nav-btn" id="profTabSold" onclick="app.switchProfileTab('sold')">
+          <i class="fa-solid fa-circle-check"></i> Satılanlar (<span id="tabCountSold">0</span>)
+        </button>
+        <button class="profile-nav-btn" id="profTabEdit" onclick="app.switchProfileTab('edit')">
+          <i class="fa-solid fa-user-pen"></i> Profili Düzenle
+        </button>
+        <button class="profile-nav-btn" id="profTabSecurity" onclick="app.switchProfileTab('security')">
+          <i class="fa-solid fa-shield-halved"></i> Şifre & Güvenlik
+        </button>
+      </div>
+
+      <!-- Tab Panes -->
+      <div class="profile-tab-panes">
+        <!-- 1. Active Listings -->
+        <div id="paneListings" class="tab-pane active">
+          <div class="pane-action-bar">
+            <span>Yayındaki aktif ilanlarınızı yönetin, fiyat güncelleyin veya satıldı olarak işaretleyin.</span>
+            <button class="btn btn-sell-cta btn-sm" onclick="app.closeProfileDrawer(); app.openNewProductModal();">
+              <i class="fa-solid fa-plus"></i> Yeni İlan Ekle
+            </button>
+          </div>
+          <div class="profile-listings-grid" id="myListingsContainer"></div>
+        </div>
+
+        <!-- 2. Sold Listings -->
+        <div id="paneSold" class="tab-pane" style="display:none;">
+          <div class="pane-action-bar">
+            <span>Daha önce satışı tamamlanmış ürünleriniz. İsterseniz tekrar yayına alabilirsiniz.</span>
+          </div>
+          <div class="profile-listings-grid" id="mySoldListingsContainer"></div>
+        </div>
+
+        <!-- 3. Edit Profile Form -->
+        <div id="paneEdit" class="tab-pane" style="display:none;">
+          <form id="editProfileForm" onsubmit="app.handleUpdateProfile(event)" class="profile-edit-form">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="editProfName" class="form-label">Ad Soyad *</label>
+                <input type="text" id="editProfName" required placeholder="Adınız Soyadınız">
+              </div>
+              <div class="form-group">
+                <label for="editProfPhone" class="form-label">Telefon Numarası</label>
+                <input type="tel" id="editProfPhone" placeholder="05XX XXX XX XX">
+              </div>
+              <div class="form-group">
+                <label for="editProfCity" class="form-label">
+                  <i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:4px;"></i> Şehir (İl) *
+                </label>
+                <select id="editProfCity" required onchange="app.handleEditProfCityChange(this.value)">
+                  <option value="">İl Seçiniz</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="editProfDistrict" class="form-label">
+                  <i class="fa-solid fa-map-pin" style="color:var(--primary); margin-right:4px;"></i> İlçe *
+                </label>
+                <select id="editProfDistrict" required disabled>
+                  <option value="">Önce İl Seçiniz</option>
+                </select>
+              </div>
+              <div class="form-group col-span-2 profile-avatar-edit-group">
+                <label class="form-label"><i class="fa-solid fa-camera"></i> Profil Fotoğrafı</label>
+                <div class="profile-avatar-card">
+                  <div class="avatar-upload-preview-wrap">
+                    <img id="editProfAvatarPreview" src="" alt="Önizleme" class="avatar-upload-preview-img">
+                    <div class="avatar-upload-hover-btn" onclick="app.triggerEditAvatarUpload()" title="Fotoğrafı Değiştir">
+                      <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                  </div>
+                  <div class="avatar-upload-meta">
+                    <div class="avatar-upload-title">Kendi Profil Fotoğrafınızı Yükleyin</div>
+                    <div class="avatar-upload-hint">Cihazınızdan bir fotoğraf seçin (JPG, PNG, WEBP - Maks. 5 MB)</div>
+                    <div class="avatar-upload-btn-row">
+                      <button type="button" class="btn btn-outline btn-sm" onclick="app.triggerEditAvatarUpload()">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Fotoğraf Seç / Yükle
+                      </button>
+                      <button type="button" class="btn btn-ghost btn-sm text-danger" onclick="app.resetAvatarToDefault()">
+                        <i class="fa-solid fa-rotate-left"></i> Varsayılana Dön
+                      </button>
+                    </div>
+                    <input type="file" id="editProfAvatarFileInput" accept="image/*" style="display:none;" onchange="app.handleEditAvatarSelected(event)">
+                    <input type="hidden" id="editProfAvatarValue" value="">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group col-span-2">
+                <label for="editProfBio" class="form-label">Hakkımda / Satıcı Biyografisi</label>
+                <textarea id="editProfBio" rows="3" placeholder="Alıcılara kendinizi ve sattığınız ürünlerle ilgili güven verici detayları yazın..."></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="btnSaveProfile">
+                <i class="fa-solid fa-floppy-disk"></i> Bilgileri Güncelle
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 4. Security & Password -->
+        <div id="paneSecurity" class="tab-pane" style="display:none;">
+          <form id="changePasswordForm" onsubmit="app.handleChangePassword(event)" class="profile-edit-form">
+            <div class="form-grid-2">
+              <div class="form-group col-span-2">
+                <label for="currentPasswordInput" class="form-label">Mevcut Şifre *</label>
+                <div class="password-input-wrapper">
+                  <input type="password" id="currentPasswordInput" required placeholder="Mevcut şifreniz">
+                  <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('currentPasswordInput', this)" title="Şifreyi Göster" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="newPasswordInput" class="form-label">Yeni Şifre (En az 6 karakter) *</label>
+                <div class="password-input-wrapper">
+                  <input type="password" id="newPasswordInput" required minlength="6" placeholder="Yeni şifreniz">
+                  <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('newPasswordInput', this)" title="Şifreyi Göster" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="newPasswordConfirmInput" class="form-label">Yeni Şifre Tekrar *</label>
+                <div class="password-input-wrapper">
+                  <input type="password" id="newPasswordConfirmInput" required minlength="6" placeholder="Yeni şifrenizi doğrulayın">
+                  <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('newPasswordConfirmInput', this)" title="Şifreyi Göster" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="btnSavePassword">
+                <i class="fa-solid fa-key"></i> Şifreyi Güncelle
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- 8. Price Filter Modal -->
+  <dialog id="priceFilterModal" class="app-dialog small-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3>Fiyat Aralığı Belirle</h3>
+        <button class="dialog-close-btn" onclick="app.togglePriceFilterModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="price-inputs-row">
+        <div class="form-group">
+          <label>En Az (₺)</label>
+          <input type="number" id="minPriceInput" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>En Çok (₺)</label>
+          <input type="number" id="maxPriceInput" placeholder="100000">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="app.clearPriceFilter()">Temizle</button>
+        <button class="btn btn-primary" onclick="app.applyPriceFilter()">Uygula</button>
+      </div>
+    </div>
+  </dialog>
+
+
+
+  <!-- Datalist for Turkish Cities Autocomplete -->
+  <datalist id="turkeyCitiesList"></datalist>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
