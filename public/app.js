@@ -336,11 +336,40 @@ class MarketplaceApp {
   }
 
   /* ==========================================================================
-     LIGHT-DISMISS FOR NATIVE DIALOGS
+     LIGHT-DISMISS & BACKDROP PROTECTION FOR NATIVE DIALOGS
      ========================================================================== */
+  triggerDialogRejectAnimation(dialog) {
+    if (!dialog) return;
+    dialog.classList.remove('dialog-backdrop-reject');
+    // Force reflow
+    void dialog.offsetWidth;
+    dialog.classList.add('dialog-backdrop-reject');
+    setTimeout(() => {
+      dialog.classList.remove('dialog-backdrop-reject');
+    }, 400);
+  }
+
   setupDialogLightDismiss() {
     const dialogs = document.querySelectorAll('dialog.app-dialog');
+    
+    // Dialogs that must NEVER close on backdrop click (protects entered form data, messaging & active processes)
+    const lockedDialogIds = new Set([
+      'newProductModal',     // İlan Ver / Düzenle (Form alanları ve fotoğraflar)
+      'authModal',          // Giriş Yap / Kayıt Ol / Kod Doğrulama (Form alanları ve oturum)
+      'chatModal',          // Sohbet & Pazarlık (Aktif mesajlaşma ve teklif süreci)
+      'profileDrawer',      // Profil Yönetimi, Düzenleme ve Şifre Değiştirme
+      'deleteAccountModal', // Hesabı Kalıcı Silme Onay Penceresi
+      'priceFilterModal'    // Fiyat Filtresi Penceresi
+    ]);
+
     dialogs.forEach(dialog => {
+      // Track mousedown origin to prevent text-selection drag or scrollbar releases from triggering dismiss
+      let mouseDownTarget = null;
+
+      dialog.addEventListener('mousedown', (event) => {
+        mouseDownTarget = event.target;
+      });
+
       dialog.addEventListener('click', (event) => {
         // Ignore synthetic keyboard submit clicks (e.g. pressing Enter in form)
         if (event.detail === 0 || (event.clientX === 0 && event.clientY === 0)) {
@@ -353,13 +382,39 @@ class MarketplaceApp {
           return;
         }
 
-        // Only close if user clicked the backdrop outside dialog-content
-        if (event.target === dialog) {
-          dialog.close();
-          if (dialog.id === 'chatModal' && this.chatPollingInterval) {
-            clearInterval(this.chatPollingInterval);
-            this.chatPollingInterval = null;
+        // Check if the click truly originated and concluded on the backdrop outside content
+        const isBackdropClick = (event.target === dialog) && (mouseDownTarget === dialog);
+        mouseDownTarget = null;
+
+        if (isBackdropClick) {
+          // If this modal is locked against backdrop dismiss, reject with shake animation
+          if (lockedDialogIds.has(dialog.id)) {
+            this.triggerDialogRejectAnimation(dialog);
+            return;
           }
+
+          // Otherwise safe to close preview/drawer dialogs
+          dialog.close();
+        }
+      });
+
+      // Handle ESC key (native dialog cancel event) to protect unsaved input
+      dialog.addEventListener('cancel', (event) => {
+        if (dialog.id === 'newProductModal') {
+          event.preventDefault();
+          this.closeNewProductModal();
+        } else if (dialog.id === 'authModal') {
+          event.preventDefault();
+          this.closeAuthModal();
+        } else if (dialog.id === 'chatModal') {
+          event.preventDefault();
+          this.closeChatModal();
+        } else if (dialog.id === 'profileDrawer') {
+          event.preventDefault();
+          this.closeProfileDrawer();
+        } else if (dialog.id === 'deleteAccountModal') {
+          event.preventDefault();
+          this.closeDeleteAccountModal();
         }
       });
 
@@ -493,7 +548,7 @@ class MarketplaceApp {
 
   completeLoginSuccess(welcomeMessage = 'Giriş başarılı!') {
     this.updateAuthUI();
-    this.closeAuthModal();
+    this.closeAuthModal(true);
     this.showToast(welcomeMessage, 'success');
     this.fetchProducts();
 
@@ -1122,9 +1177,16 @@ class MarketplaceApp {
     if (modal) modal.showModal();
   }
 
-  closeAuthModal() {
+  closeAuthModal(force = false) {
+    if (!force) {
+      const emailVerifyView = document.getElementById('emailVerifyView');
+      if (emailVerifyView && emailVerifyView.style.display !== 'none' && this.pendingVerificationEmail) {
+        const confirmLeave = window.confirm('E-posta doğrulama işlemi devam ediyor. Çıkmak istediğinize emin misiniz?');
+        if (!confirmLeave) return;
+      }
+    }
     const modal = document.getElementById('authModal');
-    if (modal) modal.close();
+    if (modal && modal.open) modal.close();
     this.resetAuthForms();
   }
 
@@ -2436,7 +2498,22 @@ class MarketplaceApp {
     }
   }
 
-  closeNewProductModal() {
+  hasNewProductUnsavedData() {
+    const title = (document.getElementById('newProdTitle')?.value || '').trim();
+    const price = (document.getElementById('newProdPrice')?.value || '').trim();
+    const desc = (document.getElementById('newProdDescription')?.value || '').trim();
+    const hasFiles = (this.selectedFiles && this.selectedFiles.length > 0) ||
+                     (this.selectedPresetUrls && this.selectedPresetUrls.length > 0);
+    return Boolean(title || price || desc || hasFiles);
+  }
+
+  closeNewProductModal(force = false) {
+    if (!force && this.hasNewProductUnsavedData()) {
+      const confirmDiscard = window.confirm('Girdiğiniz ilan bilgileri ve yüklediğiniz fotoğraflar silinecektir. Çıkmak istediğinize emin misiniz?');
+      if (!confirmDiscard) {
+        return;
+      }
+    }
     const modal = document.getElementById('newProductModal');
     if (modal && modal.open) {
       modal.close();
@@ -2576,7 +2653,7 @@ class MarketplaceApp {
 
       this.showToast('İlanınız başarıyla yayına alındı! 🎉', 'success');
       this.newProductReturnTarget = null;
-      this.closeNewProductModal();
+      this.closeNewProductModal(true);
       await this.fetchProducts();
       await this.fetchCategories();
       await this.fetchStats();
@@ -3384,7 +3461,10 @@ class MarketplaceApp {
   }
 
   closeProfileDrawer() {
-    document.getElementById('profileDrawer').close();
+    const drawer = document.getElementById('profileDrawer');
+    if (drawer && drawer.open) {
+      drawer.close();
+    }
   }
 
   triggerHeaderAvatarUpload() {

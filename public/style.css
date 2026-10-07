@@ -1864,6 +1864,30 @@ select:-webkit-autofill {
   overflow: hidden;
   max-height: 90vh;
   overflow-y: auto;
+  transition: transform 0.15s ease;
+}
+
+/* Dialog Backdrop Reject Animation (when clicking outside a locked modal like New Listing or Login) */
+@keyframes dialogRejectShake {
+  0%, 100% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.015) translateX(-5px);
+  }
+  40% {
+    transform: scale(1.015) translateX(5px);
+  }
+  60% {
+    transform: scale(1.008) translateX(-3px);
+  }
+  80% {
+    transform: scale(1.004) translateX(2px);
+  }
+}
+
+.app-dialog.dialog-backdrop-reject .dialog-content {
+  animation: dialogRejectShake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 .dialog-content h1,
