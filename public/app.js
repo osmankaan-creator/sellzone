@@ -1266,14 +1266,18 @@ class MarketplaceApp {
   }
 
   async fetchStats() {
+    const elProducts = document.getElementById('statProducts');
+    const elUsers = document.getElementById('statUsers');
+    const elMessages = document.getElementById('statMessages');
+    const elCities = document.getElementById('statCities');
+
+    if (!elProducts && !elUsers && !elMessages && !elCities) {
+      return;
+    }
+
     try {
       const res = await fetch('/api/stats');
       const stats = await res.json();
-
-      const elProducts = document.getElementById('statProducts');
-      const elUsers = document.getElementById('statUsers');
-      const elMessages = document.getElementById('statMessages');
-      const elCities = document.getElementById('statCities');
 
       if (elProducts) elProducts.textContent = (stats.activeProducts ?? '0') + '+';
       if (elUsers) elUsers.textContent = (stats.totalUsers ?? '0') + '+';
