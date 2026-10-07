@@ -17,9 +17,18 @@ function hashPassword(password) {
 
 function verifyPassword(password, stored) {
   try {
+    if (!password || !stored) return false;
     const [salt, key] = stored.split(':');
     const testHash = crypto.scryptSync(password, salt, 64).toString('hex');
-    return key === testHash;
+    if (key === testHash) return true;
+
+    // Mobile / accidental whitespace fallback
+    const trimmed = String(password).trim();
+    if (trimmed !== password) {
+      const trimmedHash = crypto.scryptSync(trimmed, salt, 64).toString('hex');
+      if (key === trimmedHash) return true;
+    }
+    return false;
   } catch (err) {
     return false;
   }

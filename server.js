@@ -471,11 +471,12 @@ app.post('/api/auth/verify-and-register', authRateLimiter.middleware(), async (r
       } catch (e) {}
     }
 
-    if (!password) {
+    const cleanPassword = String(password || '').trim();
+    if (!cleanPassword) {
       return res.status(400).json({ error: 'Kayıt için şifre gereklidir.' });
     }
 
-    const passwordHash = hashPassword(password);
+    const passwordHash = hashPassword(cleanPassword);
     const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=ff3f55,ff7a00,3b82f6`;
 
     const result = db.prepare(`
@@ -578,13 +579,34 @@ app.post('/api/auth/login', authRateLimiter.middleware(), async (req, res) => {
       return res.status(400).json({ error: cfCheck.error || 'Cloudflare robot doğrulaması başarısız oldu. Lütfen tekrar deneyin.' });
     }
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'E-posta ve şifre gereklidir.' });
+    const identifier = (email || '').trim();
+    const cleanPassword = String(password || '').trim();
+
+    if (!identifier || !cleanPassword) {
+      return res.status(400).json({ error: 'E-posta (veya telefon) ve şifre gereklidir.' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
-    if (!user || !verifyPassword(password, user.password_hash)) {
-      return res.status(401).json({ error: 'E-posta adresi veya şifre hatalı.' });
+    const cleanEmail = identifier.toLowerCase();
+    const phoneDigits = identifier.replace(/\D/g, '');
+
+    // Search by email first
+    let user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+
+    // If not found by email and input looks like a phone number, search by phone
+    if (!user && phoneDigits.length >= 10) {
+      const last10 = phoneDigits.slice(-10);
+      user = db.prepare(`
+        SELECT * FROM users 
+        WHERE REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', '') LIKE ?
+      `).get(`%${last10}`);
+    }
+
+    if (!user) {
+      return res.status(401).json({ error: 'Bu e-posta adresi veya telefon numarası ile kayıtlı bir hesap bulunamadı.' });
+    }
+
+    if (!verifyPassword(cleanPassword, user.password_hash)) {
+      return res.status(401).json({ error: 'Girdiğiniz şifre hatalı. Lütfen kontrol edip tekrar deneyiniz.' });
     }
 
     const token = crypto.randomUUID();

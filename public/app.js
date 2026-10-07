@@ -683,11 +683,11 @@ class MarketplaceApp {
     e.preventDefault();
     this.clearAuthAlerts();
     const email = (document.getElementById('loginEmail')?.value || '').trim();
-    const password = document.getElementById('loginPassword')?.value || '';
+    const password = (document.getElementById('loginPassword')?.value || '').trim();
     const turnstileToken = this.getTurnstileToken('loginForm');
 
     if (!email) {
-      this.showAuthAlert('login', 'Lütfen e-posta adresinizi giriniz.', 'warning');
+      this.showAuthAlert('login', 'Lütfen e-posta adresinizi veya telefon numaranızı giriniz.', 'warning');
       document.getElementById('loginEmail')?.classList.add('input-error');
       return;
     }
@@ -792,7 +792,7 @@ class MarketplaceApp {
     this.clearAuthAlerts();
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
+    const password = document.getElementById('regPassword').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
     const selectedCity = (document.getElementById('regCity')?.value || '').trim();
     const selectedDistrict = (document.getElementById('regDistrict')?.value || '').trim();
