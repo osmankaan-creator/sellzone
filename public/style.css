@@ -2573,13 +2573,22 @@ select:-webkit-autofill {
   box-shadow: var(--shadow-sm);
 }
 
+.forgot-pass-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
 .forgot-pass-link {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   color: var(--primary);
   text-decoration: none;
   font-weight: 600;
   transition: all 0.2s ease;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
 }
 
 .forgot-pass-link:hover {
