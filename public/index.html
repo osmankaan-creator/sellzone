@@ -221,17 +221,9 @@
   <!-- Main Content Wrapper -->
   <main class="main-content">
 
-    <!-- Top Access Bar: Hızlı Test Girişi & Canlı İstatistikler -->
+    <!-- Top Access Bar: Canlı İstatistikler -->
     <section class="top-bar-section">
       <div class="top-bar-container">
-        <!-- Quick Demo Switcher helper bar -->
-        <div class="demo-account-bar">
-          <span class="demo-label"><i class="fa-solid fa-user-gear"></i> Hızlı Test Girişi:</span>
-          <div id="demoUsersList" class="demo-chips">
-            <!-- Populated via API -->
-          </div>
-        </div>
-
         <!-- Mini Stats Counter Strip -->
         <div class="mini-stats-strip" id="statsStrip">
           <div class="mini-stat-item" title="Aktif İlan">
@@ -476,15 +468,6 @@
             </div>
             <div class="photo-previews-list" id="photoPreviewsList"></div>
           </div>
-          <!-- Quick Preset Demo Photos -->
-          <div class="quick-preset-photos">
-            <span>Hızlı Test Fotoğrafları:</span>
-            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('matkap')">Matkap</button>
-            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('telefon')">Telefon</button>
-            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('bisiklet')">Bisiklet</button>
-            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('mobilya')">Mobilya</button>
-            <button type="button" class="preset-btn" onclick="app.addPresetPhoto('gitar')">Müzik</button>
-          </div>
         </div>
 
         <div class="form-grid-2">
@@ -570,21 +553,11 @@
         <button class="auth-tab-btn" id="tabRegisterBtn" onclick="app.switchAuthTab('register')">Hesap Oluştur</button>
       </div>
 
-      <!-- Quick Demo Login Selection -->
-      <div class="demo-login-box">
-        <div class="demo-box-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Test için Tek Tıkla Giriş Yap:</div>
-        <div class="demo-login-grid" id="modalDemoUsers">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <div class="auth-divider"><span>veya form ile devam et</span></div>
-
       <!-- Login Form -->
       <form id="loginForm" onsubmit="app.handleLogin(event)">
         <div class="form-group">
           <label for="loginEmail" class="form-label">E-Posta</label>
-          <input type="email" id="loginEmail" required placeholder="ahmet@alsat.com">
+          <input type="email" id="loginEmail" required placeholder="ornek@email.com">
         </div>
         <div class="form-group">
           <label for="loginPassword" class="form-label">Şifre</label>
@@ -656,13 +629,6 @@
           <p class="verify-desc">
             <span id="verifyTargetEmail" class="highlight-email">ornek@email.com</span> adresine <strong>SellZone</strong> tarafından 6 haneli güvenlik kodu gönderildi.
           </p>
-        </div>
-
-        <!-- Dev Mode Simulated Code Banner -->
-        <div id="devCodeBanner" class="dev-code-box" style="display:none;">
-          <div class="dev-code-title"><i class="fa-solid fa-flask"></i> Test Modu (Simülasyon Kodu):</div>
-          <div class="dev-code-val" id="devCodeValue">123456</div>
-          <small>SMTP ayarı yapılmadığında kod burada ve sunucu konsolunda görünür.</small>
         </div>
 
         <div class="form-group otp-group">

@@ -255,36 +255,14 @@ function optionalAuth(req, res, next) {
    AUTH ENDPOINTS
    ========================================================================== */
 
-// Demo users list for fast switching in UI (dev/test only)
+// Demo users endpoint (disabled)
 app.get('/api/auth/demo-users', (req, res) => {
-  try {
-    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_USERS !== 'true') {
-      return res.json([]);
-    }
-    const users = db.prepare('SELECT id, name, email, phone, avatar, city, rating FROM users LIMIT 10').all();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.json([]);
 });
 
-// Quick login for demo users
+// Quick login for demo users (disabled)
 app.post('/api/auth/quick-login', (req, res) => {
-  try {
-    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_USERS !== 'true') {
-      return res.status(403).json({ error: 'Hızlı test girişi canlı (production) ortamda güvenlik nedeniyle devre dışıdır.' });
-    }
-    const { userId } = req.body;
-    const user = db.prepare('SELECT id, name, email, phone, avatar, city, rating FROM users WHERE id = ?').get(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    }
-    const token = crypto.randomUUID();
-    saveSession(token, user.id);
-    res.json({ token, user, message: `Hoş geldiniz, ${user.name}!` });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.status(403).json({ error: 'Demo girişi devre dışıdır.' });
 });
 
 // Cloudflare Status & Security Diagnostics
@@ -480,8 +458,7 @@ app.post('/api/auth/resend-verification', authRateLimiter.middleware(), async (r
     res.json({
       success: true,
       message: `Yeni doğrulama kodu ${cleanEmail} adresine gönderildi.`,
-      expiresInSeconds: 600,
-      devCode: mailResult.devCode || null
+      expiresInSeconds: 600
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -534,8 +511,7 @@ app.post('/api/auth/register', authRateLimiter.middleware(), async (req, res) =>
       requiresVerification: true,
       email: cleanEmail,
       message: `${cleanEmail} adresine 6 haneli doğrulama kodu gönderildi. Lütfen kodu girerek kaydınızı tamamlayın.`,
-      expiresInSeconds: 600,
-      devCode: mailResult.devCode || null
+      expiresInSeconds: 600
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

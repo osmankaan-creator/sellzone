@@ -440,46 +440,7 @@ class MarketplaceApp {
   }
 
   async fetchDemoUsers() {
-    try {
-      const res = await fetch('/api/auth/demo-users');
-      this.demoUsers = await res.json();
-      
-      const demoBar = document.querySelector('.demo-account-bar');
-      const modalDemoBox = document.querySelector('.demo-login-box');
-      const authDivider = document.querySelector('.auth-divider');
-
-      // If in production or demo users are disabled, clean up demo UI elements
-      if (!Array.isArray(this.demoUsers) || this.demoUsers.length === 0) {
-        if (demoBar) demoBar.style.display = 'none';
-        if (modalDemoBox) modalDemoBox.style.display = 'none';
-        if (authDivider) authDivider.style.display = 'none';
-        return;
-      }
-
-      // Populate demo chips in top bar
-      const heroDemoList = document.getElementById('demoUsersList');
-      const modalDemoList = document.getElementById('modalDemoUsers');
-
-      if (heroDemoList) {
-        heroDemoList.innerHTML = this.demoUsers.slice(0, 4).map(u => `
-          <button class="demo-user-chip" onclick="app.quickLogin(${u.id})">
-            <img src="${u.avatar}" class="demo-chip-avatar" alt="${u.name}">
-            <span>${u.name.split(' ')[0]} (${u.city.split(',')[0]})</span>
-          </button>
-        `).join('');
-      }
-
-      if (modalDemoList) {
-        modalDemoList.innerHTML = this.demoUsers.map(u => `
-          <button type="button" class="modal-demo-btn" onclick="app.quickLogin(${u.id})">
-            <img src="${u.avatar}" class="demo-chip-avatar" alt="${u.name}">
-            <span>${u.name}</span>
-          </button>
-        `).join('');
-      }
-    } catch (err) {
-      console.error('Demo users error:', err);
-    }
+    this.demoUsers = [];
   }
 
   async quickLogin(userId) {
@@ -723,32 +684,19 @@ class MarketplaceApp {
     }
   }
 
-  showVerificationView(email, devCode = null) {
+  showVerificationView(email) {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const verifyView = document.getElementById('emailVerifyView');
     const targetEmailSpan = document.getElementById('verifyTargetEmail');
-    const devBanner = document.getElementById('devCodeBanner');
-    const devVal = document.getElementById('devCodeValue');
-    const demoBox = document.querySelector('.demo-login-box');
-    const authDivider = document.querySelector('.auth-divider');
     const authTabs = document.querySelector('.auth-tabs');
 
     if (loginForm) loginForm.style.display = 'none';
     if (registerForm) registerForm.style.display = 'none';
-    if (demoBox) demoBox.style.display = 'none';
-    if (authDivider) authDivider.style.display = 'none';
     if (authTabs) authTabs.style.display = 'none';
 
     if (targetEmailSpan) targetEmailSpan.textContent = email;
-
-    // Handle Dev/Test Simulation Code Banner
-    if (devCode) {
-      if (devBanner) devBanner.style.display = 'block';
-      if (devVal) devVal.textContent = devCode;
-    } else {
-      if (devBanner) devBanner.style.display = 'none';
-    }
+    if (verifyView) verifyView.style.display = 'block';
 
     // Reset OTP boxes
     const boxes = document.querySelectorAll('.otp-box');
@@ -884,16 +832,11 @@ class MarketplaceApp {
 
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
-    const verifyView = document.getElementById('emailVerifyView');
-    const demoBox = document.querySelector('.demo-login-box');
-    const authDivider = document.querySelector('.auth-divider');
     const authTabs = document.querySelector('.auth-tabs');
     const tabRegisterBtn = document.getElementById('tabRegisterBtn');
     const tabLoginBtn = document.getElementById('tabLoginBtn');
 
     if (verifyView) verifyView.style.display = 'none';
-    if (demoBox) demoBox.style.display = 'block';
-    if (authDivider) authDivider.style.display = 'block';
     if (authTabs) authTabs.style.display = 'flex';
     if (loginForm) loginForm.style.display = 'none';
     if (registerForm) registerForm.style.display = 'block';
@@ -1051,12 +994,8 @@ class MarketplaceApp {
       verifyBtn.innerHTML = 'Doğrula ve Hesabı Aç';
     }
 
-    // 7. Demo kutusu ve sekmeleri görünür kıl
-    const demoBox = document.querySelector('.demo-login-box');
-    const authDivider = document.querySelector('.auth-divider');
+    // 7. Sekmeleri görünür kıl
     const authTabs = document.querySelector('.auth-tabs');
-    if (demoBox) demoBox.style.display = 'block';
-    if (authDivider) authDivider.style.display = 'block';
     if (authTabs) authTabs.style.display = 'flex';
 
     // 8. Turnstile doğrulamalarını sıfırla
