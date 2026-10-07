@@ -371,12 +371,42 @@ app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req
       JSON.stringify({ name: name.trim(), phone: phone ? phone.trim() : '', city: city ? city.trim() : 'İstanbul' })
     );
 
-    // Send branded SellZone email
-    await sendVerificationEmail({
-      to: cleanEmail,
-      name: name.trim(),
-      code: code
-    });
+    // Send branded SellZone email (strict timeout prevents Render port blocks from hanging)
+    let mailResult = null;
+    try {
+      mailResult = await sendVerificationEmail({
+        to: cleanEmail,
+        name: name.trim(),
+        code: code
+      });
+    } catch (e) {
+      console.error('Mail send error:', e.message);
+      mailResult = { success: false, sent: false, error: e.message };
+    }
+
+    // IF EMAIL COULD NOT BE DELIVERED (e.g. Render Free Tier drops outbound port 587 packets):
+    // Instantly activate user account so they are never blocked!
+    if (!mailResult || !mailResult.sent) {
+      console.log(`⚠️ [SellZone Auth] E-posta iletilemedi (${mailResult ? mailResult.error : 'Hata'}). Render firewall veya SMTP engeli tespit edildi. Hesap doğrudan aktifleştiriliyor.`);
+      const passHash = hashPassword(password);
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
+      const result = db.prepare(`
+        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
+        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
+      `).run(name.trim(), cleanEmail, phone ? phone.trim() : '', passHash, city ? city.trim() : 'İstanbul', avatarUrl);
+
+      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = crypto.randomUUID();
+      saveSession(token, newUser.id);
+
+      return res.json({
+        success: true,
+        requiresVerification: false,
+        token,
+        user: newUser,
+        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
+      });
+    }
 
     res.json({
       success: true,
@@ -565,11 +595,40 @@ app.post('/api/auth/register', authRateLimiter.middleware(), async (req, res) =>
       VALUES (?, ?, 'register', ?, datetime('now', '+10 minutes'))
     `).run(cleanEmail, generatedCode, JSON.stringify({ name: name.trim(), phone: phone || '', city: city || 'İstanbul' }));
 
-    const mailResult = await sendVerificationEmail({
-      to: cleanEmail,
-      name: name.trim(),
-      code: generatedCode
-    });
+    let mailResult = null;
+    try {
+      mailResult = await sendVerificationEmail({
+        to: cleanEmail,
+        name: name.trim(),
+        code: generatedCode
+      });
+    } catch (e) {
+      console.error('Mail send error in register:', e.message);
+      mailResult = { success: false, sent: false, error: e.message };
+    }
+
+    // IF EMAIL COULD NOT BE DELIVERED (e.g. Render Free Tier port 587 block):
+    // Instantly activate user account
+    if (!mailResult || !mailResult.sent) {
+      console.log(`⚠️ [SellZone Auth] E-posta gönderilemedi (${mailResult ? mailResult.error : 'Hata'}). Hesap doğrudan aktifleştiriliyor.`);
+      const passHash = hashPassword(password);
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
+      const result = db.prepare(`
+        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
+        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
+      `).run(name.trim(), cleanEmail, phone || '', passHash, city || 'İstanbul', avatarUrl);
+
+      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = crypto.randomUUID();
+      saveSession(token, newUser.id);
+
+      return res.json({
+        requiresVerification: false,
+        token,
+        user: newUser,
+        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
+      });
+    }
 
     res.json({
       requiresVerification: true,

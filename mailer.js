@@ -1,24 +1,26 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Check if custom SMTP is configured in environment variables
+ * Check if custom SMTP or HTTPS email service is configured
  */
 function isSmtpConfigured() {
   const host = (process.env.SMTP_HOST || '').trim();
   const user = (process.env.SMTP_USER || '').trim();
   const pass = (process.env.SMTP_PASS || '').trim();
-  return Boolean(host && user && pass);
+  const resendKey = (process.env.RESEND_API_KEY || '').trim();
+  const brevoKey = (process.env.BREVO_API_KEY || '').trim();
+  return Boolean((host && user && pass) || resendKey || brevoKey);
 }
 
 /**
- * Create SMTP transporter if configured
+ * Create SMTP transporter if configured with strict timeouts
  */
 function getTransporter() {
-  if (!isSmtpConfigured()) return null;
-
   const host = (process.env.SMTP_HOST || '').trim();
   const user = (process.env.SMTP_USER || '').trim();
   const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
+  if (!host || !user || !pass) return null;
+
   const port = parseInt((process.env.SMTP_PORT || '587').toString().trim(), 10);
   const secure = (process.env.SMTP_SECURE || '').toString().trim() === 'true' || port === 465;
 
@@ -30,6 +32,10 @@ function getTransporter() {
       user: user,
       pass: pass
     },
+    connectionTimeout: 3500, // 3.5s timeout prevents hanging on Render egress port blocks
+    greetingTimeout: 3500,
+    socketTimeout: 4000,
+    dnsTimeout: 3000,
     tls: {
       rejectUnauthorized: process.env.SMTP_REJECT_UNAUTHORIZED !== 'false'
     }
@@ -138,12 +144,12 @@ function generateVerificationEmailHtml(name, code) {
 }
 
 /**
- * Send Verification Email to the recipient
+ * Send Verification Email to the recipient (supports SMTP with strict timeout and Resend HTTPS API)
  * @param {Object} options
  * @param {string} options.to - Recipient email
  * @param {string} options.name - Recipient name
  * @param {string} options.code - 6-digit verification code
- * @returns {Promise<{success: boolean, sentViaSmtp: boolean, message: string}>}
+ * @returns {Promise<{success: boolean, sent: boolean, provider?: string, message?: string, error?: string}>}
  */
 async function sendVerificationEmail({ to, name, code }) {
   const fromName = process.env.SMTP_FROM_NAME || 'SellZone';
@@ -153,52 +159,74 @@ async function sendVerificationEmail({ to, name, code }) {
   const html = generateVerificationEmailHtml(name, code);
   const text = `Merhaba ${name || 'Kullanıcı'},\n\nSellZone hesabınızı doğrulamak için güvenlik kodunuz: ${code}\nBu kod 10 dakika geçerlidir.\n\nSellZone Ekibi`;
 
-  const transporter = getTransporter();
+  // 1. Resend HTTPS API (Port 443 - works on Render Free Tier without SMTP port blocks)
+  const resendKey = (process.env.RESEND_API_KEY || '').trim();
+  if (resendKey) {
+    try {
+      console.log(`📧 [SellZone Mailer] Resend HTTPS API ile e-posta gönderiliyor -> ${to}...`);
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM || `${fromName} <onboarding@resend.dev>`,
+          to: [to],
+          subject: subject,
+          html: html,
+          text: text
+        }),
+        signal: AbortSignal.timeout(4500)
+      });
+      const resendData = await resendRes.json();
+      if (resendRes.ok) {
+        console.log(`✅ [SellZone Mailer] Resend API ile başarıyla gönderildi -> ${to} (ID: ${resendData.id})`);
+        return { success: true, sent: true, provider: 'resend', message: 'Doğrulama kodu e-posta adresinize gönderildi.' };
+      }
+      console.error('❌ [SellZone Mailer] Resend API hatası:', resendData);
+    } catch (err) {
+      console.error('❌ [SellZone Mailer] Resend API bağlantı hatası:', err.message);
+    }
+  }
 
+  // 2. SMTP Transporter with 4s timeout (detects Render egress firewall block immediately)
+  const transporter = getTransporter();
   if (transporter) {
     try {
-      const info = await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: from,
         to: to,
         subject: subject,
         text: text,
         html: html
       });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP bağlantı zaman aşımı (Render port 587 kısıtlaması)')), 3800)
+      );
+
+      const info = await Promise.race([sendPromise, timeoutPromise]);
       console.log(`📧 [SellZone Mailer] Doğrulama kodu SMTP ile gönderildi -> ${to} (MessageId: ${info.messageId})`);
-      return { success: true, sentViaSmtp: true, message: 'Doğrulama kodu e-posta adresinize gönderildi.' };
+      return { success: true, sent: true, provider: 'smtp', message: 'Doğrulama kodu e-posta adresinize gönderildi.' };
     } catch (err) {
       console.error(`❌ [SellZone Mailer] SMTP gönderim hatası (${to}):`, err.message);
-      // Fallback to dev log output so the user is never stuck
-      printDevMailLog(to, name, code, err.message);
       return {
-        success: true,
-        sentViaSmtp: false,
-        message: 'E-posta servisi yanıt vermedi, test modunda kod konsola yazdırıldı.',
+        success: false,
+        sent: false,
+        error: err.message,
         devCode: code
       };
     }
-  } else {
-    // SMTP not configured yet in .env - print clear dev banner
-    printDevMailLog(to, name, code, 'SMTP ayarları .env dosyasında henüz tanımlanmamış (Simülasyon / Test Modu)');
-    return {
-      success: true,
-      sentViaSmtp: false,
-      message: 'Doğrulama kodu oluşturuldu (Test Modu).',
-      devCode: code
-    };
   }
-}
 
-function printDevMailLog(to, name, code, reason) {
-  console.log(`\n======================================================================`);
-  console.log(`📬 [SELLZONE SİSTEMİ - E-POSTA DOĞRULAMA SİMÜLASYONU]`);
-  console.log(`----------------------------------------------------------------------`);
-  console.log(`Gönderen : "SellZone" <noreply@sellzone.com>`);
-  console.log(`Alıcı    : ${name || 'Kullanıcı'} <${to}>`);
-  console.log(`Konu     : SellZone - E-Posta Doğrulama Kodunuz: ${code}`);
-  console.log(`DURUM    : ${reason || 'Test Modu'}`);
-  console.log(`\n🔥 DOĞRULAMA KODU : [  ${code}  ]  (10 Dakika Geçerli) 🔥`);
-  console.log(`======================================================================\n`);
+  // Not configured
+  return {
+    success: false,
+    sent: false,
+    error: 'E-posta servisi yapılandırılmamış',
+    devCode: code
+  };
 }
 
 module.exports = {

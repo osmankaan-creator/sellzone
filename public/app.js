@@ -755,12 +755,13 @@ class MarketplaceApp {
       const res = await fetch('/api/auth/send-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, phone, city, turnstileToken })
+        body: JSON.stringify({ name, email, password, phone, city, turnstileToken }),
+        signal: AbortSignal.timeout(9000)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // If SMTP is not configured, server activated account immediately
+      // If server activated account immediately (e.g. Render SMTP port block fallback)
       if (data.requiresVerification === false && data.token) {
         this.token = data.token;
         this.currentUser = data.user;
@@ -770,14 +771,17 @@ class MarketplaceApp {
         return;
       }
 
-      // If SMTP is configured, prompt for 6-digit verification code
+      // If verification code was sent, prompt for 6-digit verification code
       this.pendingRegistration = { name, email, password, phone, city };
       this.showVerificationView(email);
       this.showToast(data.message || `${email} adresine doğrulama kodu gönderildi.`, 'info');
     } catch (err) {
       this.resetTurnstile();
-      this.showAuthAlert('register', err.message, 'error');
-      this.showToast(err.message, 'error');
+      const errorMsg = err.name === 'TimeoutError' || err.name === 'AbortError'
+        ? 'Sunucu yanıt vermedi, lütfen tekrar deneyiniz.'
+        : err.message;
+      this.showAuthAlert('register', errorMsg, 'error');
+      this.showToast(errorMsg, 'error');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
