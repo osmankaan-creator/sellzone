@@ -816,20 +816,14 @@ class MarketplaceApp {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // If server activated account immediately (e.g. Render SMTP port block fallback)
-      if (data.requiresVerification === false && data.token) {
-        this.token = data.token;
-        this.currentUser = data.user;
-        localStorage.setItem('alsat_token', this.token);
-        localStorage.setItem('alsat_user', JSON.stringify(this.currentUser));
-        this.completeLoginSuccess(data.message || `Hoş geldiniz, ${this.currentUser.name}!`);
-        return;
-      }
-
-      // If verification code was sent, prompt for 6-digit verification code
+      // Save pending registration and transition to verification view
       this.pendingRegistration = { name, email, password, phone, city };
-      this.showVerificationView(email);
-      this.showToast(data.message || `${email} adresine doğrulama kodu gönderildi.`, 'info');
+      this.showVerificationView(email, { devCode: data.devCode, mailSent: data.mailSent });
+      if (data.mailSent) {
+        this.showToast(data.message || `${email} adresine doğrulama kodu gönderildi.`, 'info');
+      } else {
+        this.showToast('Doğrulama kodu oluşturuldu. Lütfen kodu giriniz.', 'warning');
+      }
     } catch (err) {
       this.resetTurnstile();
       const errorMsg = err.name === 'TimeoutError' || err.name === 'AbortError'
@@ -845,19 +839,43 @@ class MarketplaceApp {
     }
   }
 
-  showVerificationView(email) {
+  showVerificationView(email, options = {}) {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const verifyView = document.getElementById('emailVerifyView');
     const targetEmailSpan = document.getElementById('verifyTargetEmail');
     const authTabs = document.querySelector('.auth-tabs');
+    const verifyAlertBox = document.getElementById('verifyAlertBox');
 
     if (loginForm) loginForm.style.display = 'none';
     if (registerForm) registerForm.style.display = 'none';
     if (authTabs) authTabs.style.display = 'none';
 
     if (targetEmailSpan) targetEmailSpan.textContent = email;
-    if (verifyView) verifyView.style.display = 'block';
+    if (verifyView) verifyView.style.display = 'flex';
+
+    if (verifyAlertBox) {
+      if (options.devCode) {
+        verifyAlertBox.className = 'auth-inline-alert warning';
+        verifyAlertBox.style.display = 'block';
+        verifyAlertBox.innerHTML = `
+          <div style="font-weight: 700; margin-bottom: 6px; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>E-Posta Servis Bildirimi</span>
+          </div>
+          <div style="font-size: 13px; line-height: 1.5; color: #e2e8f0;">
+            Render sunucusu ücretsiz planda SMTP portlarını engellediği için e-posta gelen kutusuna iletilemedi.<br>
+            Hesabınızı onaylamak için doğrulama kodunuz: <strong style="letter-spacing: 2px; font-size: 16px; color: #ff3f55; background: rgba(255,63,85,0.15); padding: 2px 8px; border-radius: 6px;">${options.devCode}</strong>
+          </div>
+          <div style="font-size: 11px; margin-top: 6px; color: #94a3b8;">
+            (Kodu aşağıdaki 6 kutucuğa girerek hesabınızı hemen açabilirsiniz. Gerçek e-posta gönderimi için Render'a ücretsiz RESEND_API_KEY veya BREVO_API_KEY ekleyebilirsiniz.)
+          </div>
+        `;
+      } else {
+        verifyAlertBox.style.display = 'none';
+        verifyAlertBox.innerHTML = '';
+      }
+    }
 
     // Reset OTP boxes
     const boxes = document.querySelectorAll('.otp-box');
@@ -866,8 +884,6 @@ class MarketplaceApp {
       b.classList.remove('filled');
       b.style.borderColor = '';
     });
-
-    if (verifyView) verifyView.style.display = 'flex';
 
     // Start 10-minute expiry countdown
     this.startVerifyCountdown(600);
@@ -961,10 +977,20 @@ class MarketplaceApp {
       if (!res.ok) throw new Error(data.error);
 
       if (data.devCode) {
-        const devBanner = document.getElementById('devCodeBanner');
-        const devVal = document.getElementById('devCodeValue');
-        if (devBanner) devBanner.style.display = 'block';
-        if (devVal) devVal.textContent = data.devCode;
+        const verifyAlertBox = document.getElementById('verifyAlertBox');
+        if (verifyAlertBox) {
+          verifyAlertBox.className = 'auth-inline-alert warning';
+          verifyAlertBox.style.display = 'block';
+          verifyAlertBox.innerHTML = `
+            <div style="font-weight: 700; margin-bottom: 6px; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Yeni Kod Oluşturuldu</span>
+            </div>
+            <div style="font-size: 13px; line-height: 1.5; color: #e2e8f0;">
+              Yeni doğrulama kodunuz: <strong style="letter-spacing: 2px; font-size: 16px; color: #ff3f55; background: rgba(255,63,85,0.15); padding: 2px 8px; border-radius: 6px;">${data.devCode}</strong>
+            </div>
+          `;
+        }
       }
 
       // Clear boxes

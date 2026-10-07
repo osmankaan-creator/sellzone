@@ -333,29 +333,7 @@ app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req
       return res.status(400).json({ error: 'Bu e-posta adresi ile zaten kayıtlı bir hesap var.' });
     }
 
-    // If SMTP is not yet configured, create account directly so users are never blocked
-    if (!isSmtpConfigured()) {
-      const passHash = hashPassword(password);
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
-      const result = db.prepare(`
-        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
-        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
-      `).run(name.trim(), cleanEmail, phone ? phone.trim() : '', passHash, city ? city.trim() : 'İstanbul', avatarUrl);
-
-      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
-      const token = crypto.randomUUID();
-      saveSession(token, newUser.id);
-
-      return res.json({
-        success: true,
-        requiresVerification: false,
-        token,
-        user: newUser,
-        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
-      });
-    }
-
-    // SMTP is configured: Generate secure 6-digit numeric OTP code
+    // Generate secure 6-digit numeric OTP code
     const code = crypto.randomInt(100000, 1000000).toString();
 
     // Remove any previous active codes for this email
@@ -384,35 +362,20 @@ app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req
       mailResult = { success: false, sent: false, error: e.message };
     }
 
-    // IF EMAIL COULD NOT BE DELIVERED (e.g. Render Free Tier drops outbound port 587 packets):
-    // Instantly activate user account so they are never blocked!
-    if (!mailResult || !mailResult.sent) {
-      console.log(`⚠️ [SellZone Auth] E-posta iletilemedi (${mailResult ? mailResult.error : 'Hata'}). Render firewall veya SMTP engeli tespit edildi. Hesap doğrudan aktifleştiriliyor.`);
-      const passHash = hashPassword(password);
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
-      const result = db.prepare(`
-        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
-        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
-      `).run(name.trim(), cleanEmail, phone ? phone.trim() : '', passHash, city ? city.trim() : 'İstanbul', avatarUrl);
+    const mailSent = Boolean(mailResult && mailResult.sent);
 
-      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
-      const token = crypto.randomUUID();
-      saveSession(token, newUser.id);
-
-      return res.json({
-        success: true,
-        requiresVerification: false,
-        token,
-        user: newUser,
-        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
-      });
-    }
-
+    // CRITICAL: We NEVER bypass verification or automatically create user accounts!
+    // The account MUST ONLY be created after entering the 6-digit code in /api/auth/verify-and-register.
     res.json({
       success: true,
       requiresVerification: true,
       email: cleanEmail,
-      message: `${cleanEmail} adresine 6 haneli doğrulama kodu gönderildi.`,
+      mailSent: mailSent,
+      // If email couldn't be delivered (e.g. Render blocks port 587 or missing API key), provide devCode so the user can test entering OTP
+      devCode: mailSent ? undefined : code,
+      message: mailSent
+        ? `${cleanEmail} adresine 6 haneli doğrulama kodu gönderildi.`
+        : 'Doğrulama kodu oluşturuldu.',
       expiresInSeconds: 600
     });
   } catch (err) {
@@ -522,15 +485,27 @@ app.post('/api/auth/resend-verification', authRateLimiter.middleware(), async (r
       VALUES (?, ?, 'register', ?, datetime('now', '+10 minutes'))
     `).run(cleanEmail, code, JSON.stringify({ name: (name || 'Kullanıcı').trim() }));
 
-    const mailResult = await sendVerificationEmail({
-      to: cleanEmail,
-      name: (name || 'Kullanıcı').trim(),
-      code: code
-    });
+    let mailResult = null;
+    try {
+      mailResult = await sendVerificationEmail({
+        to: cleanEmail,
+        name: (name || 'Kullanıcı').trim(),
+        code: code
+      });
+    } catch (e) {
+      console.error('Mail resend error:', e.message);
+      mailResult = { success: false, sent: false, error: e.message };
+    }
+
+    const mailSent = Boolean(mailResult && mailResult.sent);
 
     res.json({
       success: true,
-      message: `Yeni doğrulama kodu ${cleanEmail} adresine gönderildi.`,
+      mailSent: mailSent,
+      devCode: mailSent ? undefined : code,
+      message: mailSent
+        ? `Yeni doğrulama kodu ${cleanEmail} adresine gönderildi.`
+        : 'Yeni doğrulama kodu oluşturuldu.',
       expiresInSeconds: 600
     });
   } catch (err) {
@@ -541,7 +516,7 @@ app.post('/api/auth/resend-verification', authRateLimiter.middleware(), async (r
 // 4. Backward-compatible / Standard Register Endpoint
 app.post('/api/auth/register', authRateLimiter.middleware(), async (req, res) => {
   try {
-    const { name, email, password, phone, city, code } = req.body;
+    const { code } = req.body;
 
     // If code is supplied, delegate directly to verify-and-register
     if (code) {
@@ -549,93 +524,9 @@ app.post('/api/auth/register', authRateLimiter.middleware(), async (req, res) =>
       return app._router.handle(req, res);
     }
 
-    // If code is not supplied, send verification email
-    const turnstileToken = req.body['cf-turnstile-response'] || req.body.turnstileToken;
-    const cfCheck = await verifyTurnstileToken(turnstileToken, req.cf.clientIp);
-    if (!cfCheck.success) {
-      return res.status(400).json({ error: cfCheck.error || 'Cloudflare robot doğrulaması başarısız oldu.' });
-    }
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Ad soyad, e-posta ve şifre zorunludur.' });
-    }
-
-    const cleanEmail = email.toLowerCase().trim();
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(cleanEmail);
-    if (existing) {
-      return res.status(400).json({ error: 'Bu e-posta adresi ile zaten bir hesap var.' });
-    }
-
-    // If SMTP is not yet configured on the server, create the account directly so users are never blocked
-    if (!isSmtpConfigured()) {
-      const passHash = hashPassword(password);
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
-      const result = db.prepare(`
-        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
-        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
-      `).run(name.trim(), cleanEmail, phone || '', passHash, city || 'İstanbul', avatarUrl);
-
-      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
-      const token = crypto.randomUUID();
-      saveSession(token, newUser.id);
-
-      return res.json({
-        requiresVerification: false,
-        token,
-        user: newUser,
-        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
-      });
-    }
-
-    // SMTP is configured: Trigger verification code
-    const generatedCode = crypto.randomInt(100000, 1000000).toString();
-    db.prepare("DELETE FROM email_verifications WHERE email = ? AND type = 'register'").run(cleanEmail);
-    db.prepare(`
-      INSERT INTO email_verifications (email, code, type, payload, expires_at)
-      VALUES (?, ?, 'register', ?, datetime('now', '+10 minutes'))
-    `).run(cleanEmail, generatedCode, JSON.stringify({ name: name.trim(), phone: phone || '', city: city || 'İstanbul' }));
-
-    let mailResult = null;
-    try {
-      mailResult = await sendVerificationEmail({
-        to: cleanEmail,
-        name: name.trim(),
-        code: generatedCode
-      });
-    } catch (e) {
-      console.error('Mail send error in register:', e.message);
-      mailResult = { success: false, sent: false, error: e.message };
-    }
-
-    // IF EMAIL COULD NOT BE DELIVERED (e.g. Render Free Tier port 587 block):
-    // Instantly activate user account
-    if (!mailResult || !mailResult.sent) {
-      console.log(`⚠️ [SellZone Auth] E-posta gönderilemedi (${mailResult ? mailResult.error : 'Hata'}). Hesap doğrudan aktifleştiriliyor.`);
-      const passHash = hashPassword(password);
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
-      const result = db.prepare(`
-        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
-        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
-      `).run(name.trim(), cleanEmail, phone || '', passHash, city || 'İstanbul', avatarUrl);
-
-      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
-      const token = crypto.randomUUID();
-      saveSession(token, newUser.id);
-
-      return res.json({
-        requiresVerification: false,
-        token,
-        user: newUser,
-        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
-      });
-    }
-
-    res.json({
-      requiresVerification: true,
-      email: cleanEmail,
-      message: `${cleanEmail} adresine 6 haneli doğrulama kodu gönderildi. Lütfen kodu girerek kaydınızı tamamlayın.`,
-      expiresInSeconds: 600
-    });
+    // If code is not supplied, delegate to send-verification
+    req.url = '/api/auth/send-verification';
+    return app._router.handle(req, res);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

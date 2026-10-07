@@ -190,7 +190,39 @@ async function sendVerificationEmail({ to, name, code }) {
     }
   }
 
-  // 2. SMTP Transporter with 4s timeout (detects Render egress firewall block immediately)
+  // 2. Brevo (Sendinblue) HTTPS API (Port 443 - works on Render Free Tier without SMTP port blocks)
+  const brevoKey = (process.env.BREVO_API_KEY || '').trim();
+  if (brevoKey) {
+    try {
+      console.log(`📧 [SellZone Mailer] Brevo HTTPS API ile e-posta gönderiliyor -> ${to}...`);
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: fromName, email: process.env.BREVO_FROM_EMAIL || fromEmail },
+          to: [{ email: to, name: name || 'Kullanıcı' }],
+          subject: subject,
+          htmlContent: html,
+          textContent: text
+        }),
+        signal: AbortSignal.timeout(4500)
+      });
+      const brevoData = await brevoRes.json();
+      if (brevoRes.ok) {
+        console.log(`✅ [SellZone Mailer] Brevo API ile başarıyla gönderildi -> ${to} (MessageId: ${brevoData.messageId})`);
+        return { success: true, sent: true, provider: 'brevo', message: 'Doğrulama kodu e-posta adresinize gönderildi.' };
+      }
+      console.error('❌ [SellZone Mailer] Brevo API hatası:', brevoData);
+    } catch (err) {
+      console.error('❌ [SellZone Mailer] Brevo API bağlantı hatası:', err.message);
+    }
+  }
+
+  // 3. SMTP Transporter with 4s timeout (detects Render egress firewall block immediately)
   const transporter = getTransporter();
   if (transporter) {
     try {
