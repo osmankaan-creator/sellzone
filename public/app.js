@@ -1647,6 +1647,8 @@ class MarketplaceApp {
     const registerForm = document.getElementById('registerForm');
     if (loginForm) loginForm.reset();
     if (registerForm) registerForm.reset();
+    const termsConsent = document.getElementById('regTermsConsent');
+    if (termsConsent) termsConsent.checked = false;
 
     const forgotSendForm = document.getElementById('forgotPasswordSendForm');
     if (forgotSendForm) forgotSendForm.reset();
