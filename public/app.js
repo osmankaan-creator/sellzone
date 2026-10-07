@@ -242,6 +242,7 @@ class MarketplaceApp {
     this.initOtpInputs();
     this.checkCloudflareStatus();
     this.updateAuthUI();
+    await this.validateSession();
     await this.fetchDemoUsers();
     await this.fetchCategories();
     await this.fetchStats();
@@ -253,6 +254,32 @@ class MarketplaceApp {
         this.updateHeaderBadges();
       }
     }, 5000);
+  }
+
+  async validateSession() {
+    if (!this.token) return;
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${this.token}` }
+      });
+      if (res.status === 401) {
+        // Sunucu güncellendiğinde veya oturum düştüğünde yerel hayalet oturumu temizle
+        this.token = null;
+        this.currentUser = null;
+        localStorage.removeItem('alsat_token');
+        localStorage.removeItem('alsat_user');
+        this.updateAuthUI();
+      } else if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          this.currentUser = data.user;
+          localStorage.setItem('alsat_user', JSON.stringify(this.currentUser));
+          this.updateAuthUI();
+        }
+      }
+    } catch (e) {
+      console.warn('Session verification error:', e);
+    }
   }
 
   /* ==========================================================================
@@ -3205,9 +3232,28 @@ class MarketplaceApp {
      ADVANCED USER PROFILE
      ========================================================================== */
   async openProfileOrLoginModal() {
-    if (!this.currentUser) {
+    if (!this.currentUser || !this.token) {
       this.openAuthModal('login', 'profile');
       return;
+    }
+
+    // Sunucuda oturumun hala geçerli olduğunu doğrula
+    try {
+      const checkRes = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${this.token}` }
+      });
+      if (checkRes.status === 401) {
+        this.token = null;
+        this.currentUser = null;
+        localStorage.removeItem('alsat_token');
+        localStorage.removeItem('alsat_user');
+        this.updateAuthUI();
+        this.showToast('Oturum süreniz dolmuş veya sunucu yenilenmiş. Lütfen tekrar giriş yapınız.', 'warning');
+        this.openAuthModal('login', 'profile');
+        return;
+      }
+    } catch (e) {
+      // Çevrimdışı durumlarda devam et
     }
 
     // Populate header info
@@ -3676,7 +3722,22 @@ class MarketplaceApp {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Hesap silinemedi.');
+      if (!res.ok) {
+        if (res.status === 401) {
+          // Sunucuda oturum veya hesap zaten bulunmuyor (örneğin sunucu güncellendiği veya oturum düştüğü için)
+          this.closeDeleteAccountModal();
+          this.closeProfileDrawer();
+          this.token = null;
+          this.currentUser = null;
+          localStorage.removeItem('alsat_token');
+          localStorage.removeItem('alsat_user');
+          this.updateAuthUI();
+          this.fetchProducts();
+          this.showToast('Oturumunuz sunucuda zaten sonlanmıştı. Cihazınızdaki veriler de temizlendi.', 'info');
+          return;
+        }
+        throw new Error(data.error || 'Hesap silinemedi.');
+      }
 
       // Close modal and drawer
       this.closeDeleteAccountModal();
