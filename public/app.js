@@ -339,14 +339,7 @@ class MarketplaceApp {
      LIGHT-DISMISS & BACKDROP PROTECTION FOR NATIVE DIALOGS
      ========================================================================== */
   triggerDialogRejectAnimation(dialog) {
-    if (!dialog) return;
-    dialog.classList.remove('dialog-backdrop-reject');
-    // Force reflow
-    void dialog.offsetWidth;
-    dialog.classList.add('dialog-backdrop-reject');
-    setTimeout(() => {
-      dialog.classList.remove('dialog-backdrop-reject');
-    }, 400);
+    // Disabled: modal should not shake or vibrate on outside/backdrop click
   }
 
   setupDialogLightDismiss() {
@@ -387,9 +380,8 @@ class MarketplaceApp {
         mouseDownTarget = null;
 
         if (isBackdropClick) {
-          // If this modal is locked against backdrop dismiss, reject with shake animation
+          // If this modal is locked against backdrop dismiss, simply ignore (no close, no shake)
           if (lockedDialogIds.has(dialog.id)) {
-            this.triggerDialogRejectAnimation(dialog);
             return;
           }
 
