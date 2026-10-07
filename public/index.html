@@ -555,6 +555,7 @@
 
       <!-- Login Form -->
       <form id="loginForm" onsubmit="app.handleLogin(event)">
+        <div id="loginAlertBox" class="auth-inline-alert" style="display:none;"></div>
         <div class="form-group">
           <label for="loginEmail" class="form-label">E-Posta</label>
           <input type="email" id="loginEmail" required placeholder="ornek@email.com">
@@ -574,6 +575,7 @@
 
       <!-- Register Form -->
       <form id="registerForm" onsubmit="app.handleRegister(event)" style="display:none;">
+        <div id="registerAlertBox" class="auth-inline-alert" style="display:none;"></div>
         <div class="form-group">
           <label for="regName" class="form-label">Ad Soyad</label>
           <input type="text" id="regName" required placeholder="Osman Demir">
@@ -621,6 +623,7 @@
 
       <!-- Email Verification Step View -->
       <div id="emailVerifyView" style="display:none;" class="verify-step-container">
+        <div id="verifyAlertBox" class="auth-inline-alert" style="display:none;"></div>
         <div class="verify-badge-header">
           <div class="verify-icon-bubble">
             <i class="fa-solid fa-envelope-circle-check"></i>

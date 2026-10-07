@@ -2524,6 +2524,89 @@ select:-webkit-autofill {
   box-shadow: var(--shadow-sm);
 }
 
+/* Auth Inline Alert Box */
+.auth-inline-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  line-height: 1.45;
+  animation: alertShake 0.35s ease;
+}
+
+.auth-inline-alert.error {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1.5px solid rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+}
+
+.auth-inline-alert.error i {
+  color: #ef4444;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .auth-inline-alert.error {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+[data-theme="light"] .auth-inline-alert.error i {
+  color: #dc2626;
+}
+
+.auth-inline-alert.warning {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1.5px solid rgba(245, 158, 11, 0.55);
+  color: #fde68a;
+}
+
+.auth-inline-alert.warning i {
+  color: #f59e0b;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .auth-inline-alert.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.auth-inline-alert.success {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1.5px solid rgba(16, 185, 129, 0.55);
+  color: #a7f3d0;
+}
+
+.auth-inline-alert.success i {
+  color: #10b981;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .auth-inline-alert.success {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+}
+
+@keyframes alertShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+}
+
 .demo-login-box {
   background: rgba(255, 63, 85, 0.08);
   border: 1px dashed rgba(255, 63, 85, 0.35);
@@ -4105,10 +4188,38 @@ select:-webkit-autofill {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  z-index: 9999;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 90vw;
+}
+
+/* Modals Toast Overlay (Renders in Top Layer over active dialogs) */
+.dialog-toast-container {
+  position: sticky;
+  top: 16px;
+  left: 0;
+  right: 0;
+  margin: 0 auto 16px auto;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 92%;
+  max-width: 420px;
+  pointer-events: none;
+}
+
+.dialog-toast-container .toast {
+  pointer-events: auto;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+  animation: dialogToastDrop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialogToastDrop {
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .toast {
@@ -4128,6 +4239,7 @@ select:-webkit-autofill {
 
 .toast.success { background: #065f46; border-color: #10b981; }
 .toast.error { background: #991b1b; border-color: #ef4444; }
+.toast.warning { background: #92400e; border-color: #f59e0b; }
 .toast.info { background: #1e40af; border-color: #3b82f6; }
 
 @keyframes toastSlide {

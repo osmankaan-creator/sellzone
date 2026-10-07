@@ -555,11 +555,55 @@ class MarketplaceApp {
     }
   }
 
+  showAuthAlert(formType, message, type = 'error') {
+    const boxId = formType === 'login' ? 'loginAlertBox' 
+                : formType === 'register' ? 'registerAlertBox' 
+                : 'verifyAlertBox';
+    const box = document.getElementById(boxId);
+    if (!box) return;
+
+    let icon = 'fa-circle-exclamation';
+    if (type === 'warning') icon = 'fa-triangle-exclamation';
+    if (type === 'success') icon = 'fa-circle-check';
+
+    box.className = `auth-inline-alert ${type}`;
+    box.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${this.escapeHtml(message)}</span>`;
+    box.style.display = 'flex';
+
+    // Restart shake animation
+    box.style.animation = 'none';
+    box.offsetHeight; // force reflow
+    box.style.animation = 'alertShake 0.35s ease';
+  }
+
+  clearAuthAlerts() {
+    ['loginAlertBox', 'registerAlertBox', 'verifyAlertBox'].forEach(id => {
+      const box = document.getElementById(id);
+      if (box) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+      }
+    });
+    document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+  }
+
   async handleLogin(e) {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
+    this.clearAuthAlerts();
+    const email = (document.getElementById('loginEmail')?.value || '').trim();
+    const password = document.getElementById('loginPassword')?.value || '';
     const turnstileToken = this.getTurnstileToken('loginForm');
+
+    if (!email) {
+      this.showAuthAlert('login', 'Lütfen e-posta adresinizi giriniz.', 'warning');
+      document.getElementById('loginEmail')?.classList.add('input-error');
+      return;
+    }
+    if (!password) {
+      this.showAuthAlert('login', 'Lütfen şifrenizi giriniz.', 'warning');
+      document.getElementById('loginPassword')?.classList.add('input-error');
+      return;
+    }
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -578,7 +622,13 @@ class MarketplaceApp {
       this.completeLoginSuccess('Giriş başarılı!');
     } catch (err) {
       this.resetTurnstile();
+      this.showAuthAlert('login', err.message, 'error');
       this.showToast(err.message, 'error');
+      const passInput = document.getElementById('loginPassword');
+      if (passInput) {
+        passInput.classList.add('input-error');
+        passInput.focus();
+      }
     }
   }
 
@@ -647,6 +697,7 @@ class MarketplaceApp {
 
   async handleRegister(e) {
     e.preventDefault();
+    this.clearAuthAlerts();
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
@@ -657,23 +708,38 @@ class MarketplaceApp {
     const submitBtn = document.getElementById('btnRegisterSubmit');
 
     if (!name) {
+      this.showAuthAlert('register', 'Lütfen ad ve soyadınızı giriniz.', 'warning');
       this.showToast('Lütfen ad ve soyadınızı giriniz.', 'warning');
+      document.getElementById('regName')?.classList.add('input-error');
+      document.getElementById('regName')?.focus();
       return;
     }
     if (!email || !email.includes('@')) {
+      this.showAuthAlert('register', 'Lütfen geçerli bir e-posta adresi giriniz.', 'warning');
       this.showToast('Lütfen geçerli bir e-posta adresi giriniz.', 'warning');
+      document.getElementById('regEmail')?.classList.add('input-error');
+      document.getElementById('regEmail')?.focus();
       return;
     }
     if (!selectedCity) {
+      this.showAuthAlert('register', 'Lütfen yaşadığınız ili seçiniz.', 'warning');
       this.showToast('Lütfen yaşadığınız ili seçiniz.', 'warning');
+      document.getElementById('regCity')?.classList.add('input-error');
+      document.getElementById('regCity')?.focus();
       return;
     }
     if (!selectedDistrict) {
+      this.showAuthAlert('register', 'Lütfen yaşadığınız ilçeyi seçiniz.', 'warning');
       this.showToast('Lütfen yaşadığınız ilçeyi seçiniz.', 'warning');
+      document.getElementById('regDistrict')?.classList.add('input-error');
+      document.getElementById('regDistrict')?.focus();
       return;
     }
     if (!password || password.length < 6) {
+      this.showAuthAlert('register', 'Şifreniz en az 6 karakter olmalıdır.', 'warning');
       this.showToast('Şifreniz en az 6 karakter olmalıdır.', 'warning');
+      document.getElementById('regPassword')?.classList.add('input-error');
+      document.getElementById('regPassword')?.focus();
       return;
     }
 
@@ -710,6 +776,7 @@ class MarketplaceApp {
       this.showToast(data.message || `${email} adresine doğrulama kodu gönderildi.`, 'info');
     } catch (err) {
       this.resetTurnstile();
+      this.showAuthAlert('register', err.message, 'error');
       this.showToast(err.message, 'error');
     } finally {
       if (submitBtn) {
@@ -931,6 +998,7 @@ class MarketplaceApp {
 
       this.completeLoginSuccess('🎉 Tebrikler! E-posta adresiniz doğrulandı ve hesabınız açıldı!');
     } catch (err) {
+      this.showAuthAlert('verify', err.message, 'error');
       this.showToast(err.message, 'error');
       boxes.forEach(b => {
         b.style.borderColor = '#ef4444';
@@ -959,6 +1027,9 @@ class MarketplaceApp {
      AUTH MODAL STATE & FORM RESET
      ========================================================================== */
   resetAuthForms() {
+    // 0. Hata uyarı kutularını ve kırmızı çerçeveleri temizle
+    this.clearAuthAlerts();
+
     // 1. Giriş ve Kayıt formlarını sıfırla
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -3768,7 +3839,23 @@ class MarketplaceApp {
      NOTIFICATIONS / TOASTS
      ========================================================================== */
   showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
+    // Eğer ekranda açık bir modal varsa, bildirimi anasayfanın arkasında bırakma!
+    // Modalın en üstüne yerleştirerek Top Layer içinde net ve görünür göster.
+    const openDialog = document.querySelector('dialog[open]');
+    let container = null;
+
+    if (openDialog) {
+      container = openDialog.querySelector('.dialog-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'dialog-toast-container';
+        const content = openDialog.querySelector('.dialog-content') || openDialog;
+        content.prepend(container);
+      }
+    } else {
+      container = document.getElementById('toastContainer');
+    }
+
     if (!container) return;
 
     const toast = document.createElement('div');
@@ -3776,17 +3863,17 @@ class MarketplaceApp {
 
     let icon = 'fa-circle-info';
     if (type === 'success') icon = 'fa-circle-check';
-    if (type === 'error') icon = 'fa-triangle-exclamation';
+    if (type === 'error' || type === 'warning') icon = 'fa-triangle-exclamation';
 
     toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${this.escapeHtml(message)}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
+      toast.style.transform = openDialog ? 'translateY(-10px)' : 'translateY(10px)';
       toast.style.transition = 'all 0.3s';
       setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    }, 3800);
   }
 
   /* ==========================================================================
