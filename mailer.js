@@ -4,11 +4,10 @@ const nodemailer = require('nodemailer');
  * Check if custom SMTP is configured in environment variables
  */
 function isSmtpConfigured() {
-  return Boolean(
-    process.env.SMTP_HOST &&
-    process.env.SMTP_USER &&
-    process.env.SMTP_PASS
-  );
+  const host = (process.env.SMTP_HOST || '').trim();
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').trim();
+  return Boolean(host && user && pass);
 }
 
 /**
@@ -17,16 +16,19 @@ function isSmtpConfigured() {
 function getTransporter() {
   if (!isSmtpConfigured()) return null;
 
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+  const host = (process.env.SMTP_HOST || '').trim();
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
+  const port = parseInt((process.env.SMTP_PORT || '587').toString().trim(), 10);
+  const secure = (process.env.SMTP_SECURE || '').toString().trim() === 'true' || port === 465;
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host: host,
     port: port,
     secure: secure,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: user,
+      pass: pass
     },
     tls: {
       rejectUnauthorized: process.env.SMTP_REJECT_UNAUTHORIZED !== 'false'

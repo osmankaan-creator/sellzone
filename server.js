@@ -280,6 +280,27 @@ app.get('/api/cf-status', (req, res) => {
   });
 });
 
+// SMTP Status & Diagnostics Endpoint
+app.get('/api/smtp-status', (req, res) => {
+  const host = (process.env.SMTP_HOST || '').trim();
+  const user = (process.env.SMTP_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || '').trim();
+  const port = (process.env.SMTP_PORT || '587').trim();
+  const configured = isSmtpConfigured();
+
+  res.json({
+    smtpConfigured: configured,
+    hasHost: Boolean(host),
+    hasUser: Boolean(user),
+    hasPass: Boolean(pass),
+    host: host || null,
+    port: port,
+    userMasked: user ? user.replace(/(.{2})(.*)(@.*)/, '$1***$3') : null,
+    passLength: pass ? pass.length : 0,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // 1. Send Email Verification Code for Registration
 app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req, res) => {
   try {
