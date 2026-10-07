@@ -3628,6 +3628,82 @@ class MarketplaceApp {
   }
 
   /* ==========================================================================
+     DELETE ACCOUNT
+     ========================================================================== */
+  promptDeleteAccount() {
+    if (!this.token) {
+      this.showToast('Lütfen önce giriş yapınız.', 'warning');
+      return;
+    }
+    const modal = document.getElementById('deleteAccountModal');
+    if (modal) {
+      if (typeof modal.showModal === 'function') {
+        modal.showModal();
+      } else {
+        modal.setAttribute('open', '');
+      }
+    }
+  }
+
+  closeDeleteAccountModal() {
+    const modal = document.getElementById('deleteAccountModal');
+    if (modal) {
+      if (typeof modal.close === 'function') {
+        modal.close();
+      } else {
+        modal.removeAttribute('open');
+      }
+    }
+  }
+
+  async handleDeleteAccount() {
+    if (!this.token) return;
+
+    const btn = document.getElementById('btnConfirmDeleteAccount');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Siliniyor...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Hesap silinemedi.');
+
+      // Close modal and drawer
+      this.closeDeleteAccountModal();
+      this.closeProfileDrawer();
+
+      // Clear local session & cache
+      this.token = null;
+      this.currentUser = null;
+      localStorage.removeItem('alsat_token');
+      localStorage.removeItem('alsat_user');
+
+      // Refresh UI state
+      this.updateAuthUI();
+      this.fetchProducts();
+
+      this.showToast('Hesabınız ve tüm verileriniz kalıcı olarak silindi.', 'success');
+    } catch (err) {
+      this.showToast(err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  /* ==========================================================================
      NOTIFICATIONS / TOASTS
      ========================================================================== */
   showToast(message, type = 'info') {

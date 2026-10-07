@@ -715,6 +715,37 @@ app.put('/api/auth/change-password', authenticate, (req, res) => {
   }
 });
 
+// Delete user account permanently (Cascades products, messages, favorites, sessions, views)
+app.delete('/api/auth/delete-account', authenticate, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    // Delete user from db (CASCADE rules automatically clean up products, favorites, messages, user_sessions, product_views)
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    // Clean up any email verification entries
+    if (userEmail) {
+      db.prepare('DELETE FROM email_verifications WHERE email = ?').run(userEmail.toLowerCase().trim());
+    }
+
+    // In-memory sessions cleanup
+    for (const [token, uid] of userSessions.entries()) {
+      if (uid === userId) {
+        userSessions.delete(token);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Hesabınız ve tüm verileriniz başarıyla kalıcı olarak silindi.'
+    });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    res.status(500).json({ error: 'Hesap silinirken bir hata oluştu: ' + err.message });
+  }
+});
+
 /* ==========================================================================
    CATEGORY & STATS ENDPOINTS
    ========================================================================== */

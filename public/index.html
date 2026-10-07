@@ -885,7 +885,10 @@
         </div>
 
         <div class="profile-header-actions">
-          <button class="btn btn-outline btn-sm" onclick="app.logout()" style="color: var(--danger); border-color: var(--danger);">
+          <button class="btn btn-outline btn-sm" onclick="app.promptDeleteAccount()" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" title="Hesabınızı ve verilerinizi kalıcı olarak silin">
+            <i class="fa-solid fa-trash-can"></i> Hesabımı Sil
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="app.logout()">
             <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
           </button>
         </div>
@@ -1084,6 +1087,23 @@
               </button>
             </div>
           </form>
+
+          <!-- Danger Zone: Delete Account -->
+          <div class="danger-zone-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <h4 style="color: var(--danger); margin: 0 0 6px 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Tehlikeli Bölge: Hesabı Kalıcı Olarak Sil
+                </h4>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); max-width: 520px; line-height: 1.4;">
+                  Hesabınızı sildiğinizde yayındaki tüm ilanlarınız, alıcı mesajlarınız ve kayıtlı favorileriniz sistemden kalıcı olarak silinecektir. Bu işlem geri alınamaz.
+                </p>
+              </div>
+              <button type="button" class="btn btn-danger" onclick="app.promptDeleteAccount()">
+                <i class="fa-solid fa-trash-can"></i> Hesabımı Sil
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1110,6 +1130,27 @@
       <div class="form-actions">
         <button class="btn btn-outline" onclick="app.clearPriceFilter()">Temizle</button>
         <button class="btn btn-primary" onclick="app.applyPriceFilter()">Uygula</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 9. Delete Account Confirmation Modal -->
+  <dialog id="deleteAccountModal" class="app-dialog small-dialog">
+    <div class="dialog-content" style="max-width: 440px; text-align: center; padding: 32px 24px;">
+      <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 16px;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 style="margin-bottom: 10px; color: var(--text-primary); font-size: 1.25rem;">Hesabınızı silmek istediğinize emin misiniz?</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5;">
+        Bu işlem <strong>kalıcıdır ve geri alınamaz</strong>. Satışta olan tüm ilanlarınız, alıcı mesajlarınız ve profil verileriniz tamamen silinecektir.
+      </p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button type="button" class="btn btn-outline" onclick="app.closeDeleteAccountModal()" style="min-width: 110px;">
+          Vazgeç
+        </button>
+        <button type="button" id="btnConfirmDeleteAccount" class="btn btn-danger" onclick="app.handleDeleteAccount()" style="min-width: 150px;">
+          <i class="fa-solid fa-trash-can"></i> Evet, Hesabımı Sil
+        </button>
       </div>
     </div>
   </dialog>

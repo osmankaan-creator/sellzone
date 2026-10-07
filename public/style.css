@@ -1802,6 +1802,33 @@ select:-webkit-autofill {
   width: 100%;
 }
 
+.btn-danger {
+  background: var(--danger, #ef4444);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+}
+
+.danger-zone-card {
+  margin-top: 32px;
+  padding: 22px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+[data-theme="light"] .danger-zone-card {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
 /* Text helpers */
 .text-amber { color: #f59e0b; }
 .text-coral { color: var(--primary); }
