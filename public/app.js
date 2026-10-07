@@ -259,14 +259,14 @@ class MarketplaceApp {
      THEME MANAGEMENT (DARK & LIGHT MODE / MOR DALGALAR)
      ========================================================================== */
   initTheme() {
-    // Sitenin varsayılanı Dark mod olarak kalır; kullanıcının seçimi hatırlanır
-    const savedTheme = localStorage.getItem('sellzone_theme') || 'dark';
+    // Sitenin varsayılanı Aydınlık (light) mod olarak başlar; kullanıcının seçimi hatırlanır
+    const savedTheme = localStorage.getItem('sellzone_theme') || 'light';
     this.applyTheme(savedTheme, false);
   }
 
   toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
     this.applyTheme(nextTheme, true);
   }
 

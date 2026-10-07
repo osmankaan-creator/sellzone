@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light">
   <title>Sell Zone - Hızlı Sat, Akıllı Al | İkinci El & Sıfır Pazaryeri</title>
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('sellzone_theme');
+        var theme = saved || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -189,8 +198,8 @@
         </div>
 
         <!-- Tema Değiştirme Butonu (Karanlık / Aydınlık Mod) -->
-        <button class="header-nav-icon-btn theme-toggle-btn" onclick="app.toggleTheme()" title="Aydınlık Moda Geç" id="themeToggleBtn" aria-label="Temayı Değiştir">
-          <i class="fa-solid fa-moon" id="themeToggleIcon"></i>
+        <button class="header-nav-icon-btn theme-toggle-btn" onclick="app.toggleTheme()" title="Karanlık Moda Geç" id="themeToggleBtn" aria-label="Temayı Değiştir">
+          <i class="fa-solid fa-sun" id="themeToggleIcon"></i>
         </button>
 
         <div class="header-v-divider" aria-hidden="true"></div>
