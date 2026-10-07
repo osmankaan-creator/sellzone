@@ -255,14 +255,48 @@ function optionalAuth(req, res, next) {
    AUTH ENDPOINTS
    ========================================================================== */
 
-// Demo users endpoint (disabled)
+// Helper to detect if request is coming from localhost / local development
+function isLocalhostRequest(req) {
+  if (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true') {
+    return false;
+  }
+  const host = (req.hostname || req.headers.host || '').toLowerCase();
+  const ip = req.ip || req.connection?.remoteAddress || '';
+  return host.includes('localhost') || host.includes('127.0.0.1') || ip === '127.0.0.1' || ip === '::1';
+}
+
+// Demo users endpoint (available on localhost for testing or if ENABLE_DEMO_USERS=true)
 app.get('/api/auth/demo-users', (req, res) => {
-  res.json([]);
+  try {
+    const isLocal = isLocalhostRequest(req);
+    if (!isLocal && process.env.ENABLE_DEMO_USERS !== 'true') {
+      return res.json([]);
+    }
+    const users = db.prepare('SELECT id, name, email, phone, avatar, city, rating FROM users LIMIT 10').all();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Quick login for demo users (disabled)
+// Quick login for demo users (available on localhost for testing or if ENABLE_DEMO_USERS=true)
 app.post('/api/auth/quick-login', (req, res) => {
-  res.status(403).json({ error: 'Demo girişi devre dışıdır.' });
+  try {
+    const isLocal = isLocalhostRequest(req);
+    if (!isLocal && process.env.ENABLE_DEMO_USERS !== 'true') {
+      return res.status(403).json({ error: 'Hızlı test girişi canlı ortamda devre dışıdır. Yalnızca localhost üzerinde kullanılabilir.' });
+    }
+    const { userId } = req.body;
+    const user = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    }
+    const token = crypto.randomUUID();
+    saveSession(token, user.id);
+    res.json({ token, user, message: `Hoş geldiniz, ${user.name}!` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Cloudflare Status & Security Diagnostics

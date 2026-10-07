@@ -522,7 +522,50 @@ class MarketplaceApp {
   }
 
   async fetchDemoUsers() {
-    this.demoUsers = [];
+    try {
+      const res = await fetch('/api/auth/demo-users');
+      const data = await res.json();
+      this.demoUsers = Array.isArray(data) ? data : [];
+      this.renderDemoUsers();
+    } catch (err) {
+      console.warn('Demo users fetch error:', err);
+      this.demoUsers = [];
+      this.renderDemoUsers();
+    }
+  }
+
+  renderDemoUsers() {
+    const modalBox = document.getElementById('localhostDemoBox');
+    const modalGrid = document.getElementById('modalDemoUsers');
+    const profileBox = document.getElementById('profileDemoSwitcher');
+    const profileGrid = document.getElementById('profileDemoUsersList');
+
+    if (!this.demoUsers || this.demoUsers.length === 0) {
+      if (modalBox) modalBox.style.display = 'none';
+      if (profileBox) profileBox.style.display = 'none';
+      return;
+    }
+
+    const html = this.demoUsers.map(u => {
+      const isCurrent = this.currentUser && this.currentUser.id === u.id;
+      const firstName = this.escapeHtml(u.name.split(' ')[0]);
+      const shortCity = u.city ? this.escapeHtml(u.city.split(',')[0]) : '';
+      return `
+        <button type="button" class="modal-demo-btn ${isCurrent ? 'active' : ''}" onclick="app.quickLogin(${u.id})" ${isCurrent ? 'title="Şu an bu hesaptasınız"' : ''}>
+          <img src="${u.avatar}" class="demo-chip-avatar" alt="${this.escapeHtml(u.name)}">
+          <span>${firstName} ${shortCity ? `(${shortCity})` : ''}${isCurrent ? ' ✓' : ''}</span>
+        </button>
+      `;
+    }).join('');
+
+    if (modalGrid) modalGrid.innerHTML = html;
+    if (modalBox) {
+      const loginForm = document.getElementById('loginForm');
+      modalBox.style.display = (loginForm && loginForm.style.display !== 'none') ? 'block' : 'none';
+    }
+
+    if (profileGrid) profileGrid.innerHTML = html;
+    if (profileBox) profileBox.style.display = 'block';
   }
 
   async quickLogin(userId) {
@@ -540,7 +583,9 @@ class MarketplaceApp {
       localStorage.setItem('alsat_token', this.token);
       localStorage.setItem('alsat_user', JSON.stringify(this.currentUser));
 
-      this.completeLoginSuccess(`Hoş geldin, ${this.currentUser.name}!`);
+      this.closeProfileDrawer();
+      this.renderDemoUsers();
+      this.completeLoginSuccess(`Giriş yapıldı: ${this.currentUser.name}`);
     } catch (err) {
       this.showToast(err.message, 'error');
     }
@@ -859,6 +904,9 @@ class MarketplaceApp {
     if (registerForm) registerForm.style.display = 'none';
     if (authTabs) authTabs.style.display = 'none';
 
+    const demoBox = document.getElementById('localhostDemoBox');
+    if (demoBox) demoBox.style.display = 'none';
+
     if (targetEmailSpan) targetEmailSpan.textContent = email;
     if (verifyView) verifyView.style.display = 'flex';
 
@@ -1111,6 +1159,7 @@ class MarketplaceApp {
     localStorage.removeItem('alsat_token');
     localStorage.removeItem('alsat_user');
     this.updateAuthUI();
+    this.renderDemoUsers();
     this.closeProfileDrawer();
     this.showToast('Çıkış yapıldı.', 'info');
     this.fetchProducts();
@@ -1205,6 +1254,12 @@ class MarketplaceApp {
 
     // 8. Turnstile doğrulamalarını sıfırla
     this.resetTurnstile();
+
+    // 9. Localhost demo kutusu görünürlüğü
+    const demoBox = document.getElementById('localhostDemoBox');
+    if (demoBox) {
+      demoBox.style.display = (this.demoUsers && this.demoUsers.length > 0) ? 'block' : 'none';
+    }
   }
 
   openAuthModal(tab = 'login', returnAction = null, contextMessage = null) {
@@ -1250,17 +1305,24 @@ class MarketplaceApp {
     const registerForm = document.getElementById('registerForm');
     const tabLoginBtn = document.getElementById('tabLoginBtn');
     const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+    const demoBox = document.getElementById('localhostDemoBox');
 
     if (tab === 'login') {
       if (loginForm) loginForm.style.display = 'block';
       if (registerForm) registerForm.style.display = 'none';
       if (tabLoginBtn) tabLoginBtn.classList.add('active');
       if (tabRegisterBtn) tabRegisterBtn.classList.remove('active');
+      if (demoBox && this.demoUsers && this.demoUsers.length > 0) {
+        demoBox.style.display = 'block';
+      }
     } else {
       if (loginForm) loginForm.style.display = 'none';
       if (registerForm) registerForm.style.display = 'block';
       if (tabRegisterBtn) tabRegisterBtn.classList.add('active');
       if (tabLoginBtn) tabLoginBtn.classList.remove('active');
+      if (demoBox) {
+        demoBox.style.display = 'none';
+      }
       this.initRegCitySelect();
     }
   }
