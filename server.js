@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const crypto = require('node:crypto');
 const multer = require('multer');
 const { db, initDatabase, hashPassword, verifyPassword } = require('./database');
-const { sendVerificationEmail, isSmtpConfigured } = require('./mailer');
+const { sendVerificationEmail, sendPasswordResetEmail, isSmtpConfigured } = require('./mailer');
 
 // Initialize database
 initDatabase();
@@ -623,6 +623,214 @@ app.post('/api/auth/login', authRateLimiter.middleware(), async (req, res) => {
     };
 
     res.json({ token, user: safeUser, message: 'Giriş başarılı!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. Send Password Reset Code via Email
+app.post('/api/auth/forgot-password', authRateLimiter.middleware(), async (req, res) => {
+  try {
+    const { email } = req.body;
+    const turnstileToken = req.body['cf-turnstile-response'] || req.body.turnstileToken;
+
+    // Verify Cloudflare Turnstile Bot Challenge if provided
+    if (turnstileToken) {
+      const cfCheck = await verifyTurnstileToken(turnstileToken, req.cf.clientIp);
+      if (!cfCheck.success) {
+        return res.status(400).json({ error: cfCheck.error || 'Robot doğrulaması başarısız oldu. Lütfen tekrar deneyin.' });
+      }
+    }
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Lütfen geçerli bir e-posta adresi giriniz.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if user exists
+    const user = db.prepare('SELECT id, name, email FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'Bu e-posta adresi ile kayıtlı bir hesap bulunamadı.' });
+    }
+
+    // Generate secure 6-digit numeric OTP code
+    const code = crypto.randomInt(100000, 1000000).toString();
+
+    // Remove any previous active reset codes for this email
+    db.prepare("DELETE FROM email_verifications WHERE email = ? AND type = 'reset_password'").run(cleanEmail);
+
+    // Save new reset code valid for 10 minutes
+    db.prepare(`
+      INSERT INTO email_verifications (email, code, type, payload, expires_at)
+      VALUES (?, ?, 'reset_password', ?, datetime('now', '+10 minutes'))
+    `).run(
+      cleanEmail,
+      code,
+      JSON.stringify({ userId: user.id, name: user.name })
+    );
+
+    // Send branded SellZone password reset email
+    let mailResult = null;
+    try {
+      mailResult = await sendPasswordResetEmail({
+        to: cleanEmail,
+        name: user.name,
+        code: code
+      });
+    } catch (e) {
+      console.error('Password reset mail send error:', e.message);
+      mailResult = { success: false, sent: false, error: e.message };
+    }
+
+    const mailSent = Boolean(mailResult && mailResult.sent);
+
+    res.json({
+      success: true,
+      email: cleanEmail,
+      mailSent: mailSent,
+      // If email couldn't be delivered (e.g. Render SMTP port block or no API key), provide devCode for testing
+      devCode: mailSent ? undefined : code,
+      message: mailSent
+        ? `${cleanEmail} adresine 6 haneli şifre sıfırlama kodu gönderildi.`
+        : 'Şifre sıfırlama kodu oluşturuldu.',
+      expiresInSeconds: 600
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Şifre sıfırlama talebi oluşturulurken bir hata oluştu: ' + err.message });
+  }
+});
+
+// 6. Verify Code & Set New Password
+app.post('/api/auth/reset-password', authRateLimiter.middleware(), async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ error: 'E-posta adresi ve sıfırlama kodu zorunludur.' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Yeni şifreniz en az 6 karakter olmalıdır.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanCode = String(code).trim();
+    const cleanNewPassword = String(newPassword).trim();
+
+    // Find active verification record
+    const verification = db.prepare(`
+      SELECT * FROM email_verifications
+      WHERE email = ? AND code = ? AND type = 'reset_password' AND datetime(expires_at) > datetime('now')
+      ORDER BY id DESC LIMIT 1
+    `).get(cleanEmail, cleanCode);
+
+    if (!verification) {
+      const anyRec = db.prepare(`
+        SELECT * FROM email_verifications
+        WHERE email = ? AND type = 'reset_password'
+        ORDER BY id DESC LIMIT 1
+      `).get(cleanEmail);
+
+      if (anyRec) {
+        const isExpired = db.prepare(`
+          SELECT 1 FROM email_verifications
+          WHERE id = ? AND datetime(expires_at) <= datetime('now')
+        `).get(anyRec.id);
+
+        if (isExpired) {
+          return res.status(400).json({ error: 'Sıfırlama kodunun süresi dolmuş. Lütfen yeni bir kod talep ediniz.' });
+        }
+      }
+
+      return res.status(400).json({ error: 'Girdiğiniz 6 haneli sıfırlama kodu hatalı. Lütfen kontrol ediniz.' });
+    }
+
+    // Verify user exists
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı hesabı bulunamadı.' });
+    }
+
+    // Hash new password and update in database
+    const newPasswordHash = hashPassword(cleanNewPassword);
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newPasswordHash, user.id);
+
+    // Consume all reset codes for this email
+    db.prepare("DELETE FROM email_verifications WHERE email = ? AND type = 'reset_password'").run(cleanEmail);
+
+    // Log user in automatically by generating session
+    const token = crypto.randomUUID();
+    saveSession(token, user.id);
+
+    const safeUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
+      city: user.city,
+      rating: user.rating,
+      email_verified: user.email_verified
+    };
+
+    res.json({
+      success: true,
+      token,
+      user: safeUser,
+      message: 'Şifreniz başarıyla güncellendi! SellZone hesabınıza giriş yapıldı.'
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Şifre sıfırlanırken bir hata oluştu: ' + err.message });
+  }
+});
+
+// 7. Resend Password Reset Code
+app.post('/api/auth/resend-forgot-password', authRateLimiter.middleware(), async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const user = db.prepare('SELECT id, name FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'Bu e-posta adresi ile kayıtlı bir hesap bulunamadı.' });
+    }
+
+    const code = crypto.randomInt(100000, 1000000).toString();
+    db.prepare("DELETE FROM email_verifications WHERE email = ? AND type = 'reset_password'").run(cleanEmail);
+    db.prepare(`
+      INSERT INTO email_verifications (email, code, type, payload, expires_at)
+      VALUES (?, ?, 'reset_password', ?, datetime('now', '+10 minutes'))
+    `).run(cleanEmail, code, JSON.stringify({ userId: user.id, name: user.name }));
+
+    let mailResult = null;
+    try {
+      mailResult = await sendPasswordResetEmail({
+        to: cleanEmail,
+        name: user.name,
+        code: code
+      });
+    } catch (e) {
+      console.error('Mail resend error:', e.message);
+      mailResult = { success: false, sent: false, error: e.message };
+    }
+
+    const mailSent = Boolean(mailResult && mailResult.sent);
+
+    res.json({
+      success: true,
+      mailSent: mailSent,
+      devCode: mailSent ? undefined : code,
+      message: mailSent
+        ? `Yeni şifre sıfırlama kodu ${cleanEmail} adresine gönderildi.`
+        : 'Yeni şifre sıfırlama kodu oluşturuldu.',
+      expiresInSeconds: 600
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

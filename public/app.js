@@ -240,6 +240,7 @@ class MarketplaceApp {
     this.initRegCitySelect();
     this.initEditProfCitySelect();
     this.initOtpInputs();
+    this.initForgotOtpInputs();
     this.checkCloudflareStatus();
     this.updateAuthUI();
     await this.validateSession();
@@ -650,6 +651,8 @@ class MarketplaceApp {
   showAuthAlert(formType, message, type = 'error') {
     const boxId = formType === 'login' ? 'loginAlertBox' 
                 : formType === 'register' ? 'registerAlertBox' 
+                : formType === 'forgot' ? 'forgotAlertBox'
+                : formType === 'forgotReset' ? 'forgotResetAlertBox'
                 : 'verifyAlertBox';
     const box = document.getElementById(boxId);
     if (!box) return;
@@ -669,7 +672,7 @@ class MarketplaceApp {
   }
 
   clearAuthAlerts() {
-    ['loginAlertBox', 'registerAlertBox', 'verifyAlertBox'].forEach(id => {
+    ['loginAlertBox', 'registerAlertBox', 'verifyAlertBox', 'forgotAlertBox', 'forgotResetAlertBox'].forEach(id => {
       const box = document.getElementById(id);
       if (box) {
         box.style.display = 'none';
@@ -725,7 +728,7 @@ class MarketplaceApp {
   }
 
   initOtpInputs() {
-    const boxes = document.querySelectorAll('.otp-box');
+    const boxes = document.querySelectorAll('#otpInputsRow .otp-box');
     boxes.forEach((box, idx) => {
       box.addEventListener('input', (e) => {
         const val = e.target.value.replace(/[^0-9]/g, '');
@@ -782,6 +785,84 @@ class MarketplaceApp {
 
         if (digits.length === 6) {
           this.submitEmailVerification();
+        }
+      });
+    });
+  }
+
+  initForgotOtpInputs() {
+    const boxes = document.querySelectorAll('#forgotOtpInputsRow .forgot-otp-box');
+    boxes.forEach((box, idx) => {
+      box.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = val ? val.slice(-1) : '';
+
+        if (e.target.value) {
+          e.target.classList.add('filled');
+          if (idx < boxes.length - 1) {
+            boxes[idx + 1].focus();
+            boxes[idx + 1].select();
+          }
+        } else {
+          e.target.classList.remove('filled');
+        }
+
+        const fullCode = Array.from(boxes).map(b => b.value.trim()).join('');
+        const hiddenInput = document.getElementById('fullForgotOtpCode');
+        if (hiddenInput) hiddenInput.value = fullCode;
+
+        if (fullCode.length === 6) {
+          const passInput = document.getElementById('forgotNewPassword');
+          if (passInput && !passInput.value) {
+            passInput.focus();
+          }
+        }
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          if (!box.value && idx > 0) {
+            boxes[idx - 1].focus();
+            boxes[idx - 1].value = '';
+            boxes[idx - 1].classList.remove('filled');
+          } else {
+            box.value = '';
+            box.classList.remove('filled');
+          }
+        } else if (e.key === 'ArrowLeft' && idx > 0) {
+          boxes[idx - 1].focus();
+        } else if (e.key === 'ArrowRight' && idx < boxes.length - 1) {
+          boxes[idx + 1].focus();
+        }
+
+        const fullCode = Array.from(boxes).map(b => b.value.trim()).join('');
+        const hiddenInput = document.getElementById('fullForgotOtpCode');
+        if (hiddenInput) hiddenInput.value = fullCode;
+      });
+
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        const digits = pasteData.replace(/\D/g, '').slice(0, 6);
+        if (!digits) return;
+
+        digits.split('').forEach((d, i) => {
+          if (boxes[i]) {
+            boxes[i].value = d;
+            boxes[i].classList.add('filled');
+          }
+        });
+
+        const nextIdx = Math.min(digits.length, boxes.length - 1);
+        if (boxes[nextIdx]) boxes[nextIdx].focus();
+
+        const fullCode = Array.from(boxes).map(b => b.value.trim()).join('');
+        const hiddenInput = document.getElementById('fullForgotOtpCode');
+        if (hiddenInput) hiddenInput.value = fullCode;
+
+        if (fullCode.length === 6) {
+          const passInput = document.getElementById('forgotNewPassword');
+          if (passInput) passInput.focus();
         }
       });
     });
@@ -1145,6 +1226,397 @@ class MarketplaceApp {
     }
   }
 
+  /* ==========================================================================
+     FORGOT PASSWORD & RESET FLOW
+     ========================================================================== */
+  showForgotPasswordView() {
+    this.clearAuthAlerts();
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const verifyView = document.getElementById('emailVerifyView');
+    const forgotEmailView = document.getElementById('forgotPasswordEmailView');
+    const forgotResetView = document.getElementById('forgotPasswordResetView');
+    const authTabs = document.querySelector('.auth-tabs');
+    const demoBox = document.getElementById('localhostDemoBox');
+
+    if (loginForm) loginForm.style.display = 'none';
+    if (registerForm) registerForm.style.display = 'none';
+    if (verifyView) verifyView.style.display = 'none';
+    if (forgotResetView) forgotResetView.style.display = 'none';
+    if (authTabs) authTabs.style.display = 'none';
+    if (demoBox) demoBox.style.display = 'none';
+
+    if (forgotEmailView) forgotEmailView.style.display = 'flex';
+
+    const loginEmailVal = (document.getElementById('loginEmail')?.value || '').trim();
+    const forgotEmailInput = document.getElementById('forgotEmail');
+    if (forgotEmailInput) {
+      if (loginEmailVal && loginEmailVal.includes('@')) {
+        forgotEmailInput.value = loginEmailVal;
+      }
+      setTimeout(() => forgotEmailInput.focus(), 80);
+    }
+  }
+
+  backToLoginForm() {
+    this.resetAuthForms();
+    this.switchAuthTab('login');
+  }
+
+  backToForgotPasswordEmail() {
+    if (this.forgotCountdownInterval) {
+      clearInterval(this.forgotCountdownInterval);
+      this.forgotCountdownInterval = null;
+    }
+    if (this.forgotResendCooldownInterval) {
+      clearInterval(this.forgotResendCooldownInterval);
+      this.forgotResendCooldownInterval = null;
+    }
+
+    const forgotResetView = document.getElementById('forgotPasswordResetView');
+    const forgotEmailView = document.getElementById('forgotPasswordEmailView');
+
+    if (forgotResetView) forgotResetView.style.display = 'none';
+    if (forgotEmailView) forgotEmailView.style.display = 'flex';
+
+    const forgotEmailInput = document.getElementById('forgotEmail');
+    if (forgotEmailInput) {
+      setTimeout(() => forgotEmailInput.focus(), 80);
+    }
+  }
+
+  async handleForgotPasswordSendCode(e) {
+    e.preventDefault();
+    this.clearAuthAlerts();
+
+    const email = (document.getElementById('forgotEmail')?.value || '').trim();
+    const submitBtn = document.getElementById('btnForgotSendSubmit');
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Sıfırlama Kodu Gönder';
+
+    if (!email || !email.includes('@')) {
+      this.showAuthAlert('forgot', 'Lütfen geçerli bir e-posta adresi giriniz.', 'warning');
+      this.showToast('Lütfen geçerli bir e-posta adresi giriniz.', 'warning');
+      document.getElementById('forgotEmail')?.classList.add('input-error');
+      document.getElementById('forgotEmail')?.focus();
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Kod Gönderiliyor...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Şifre sıfırlama kodu gönderilemedi.');
+      }
+
+      this.pendingForgotPasswordEmail = data.email;
+      this.showToast(data.message || 'Sıfırlama kodu gönderildi.', 'success');
+      this.showForgotPasswordResetView(data.email, data);
+    } catch (err) {
+      this.showAuthAlert('forgot', err.message, 'error');
+      this.showToast(err.message, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    }
+  }
+
+  showForgotPasswordResetView(email, options = {}) {
+    const forgotEmailView = document.getElementById('forgotPasswordEmailView');
+    const forgotResetView = document.getElementById('forgotPasswordResetView');
+    const targetEmailSpan = document.getElementById('forgotTargetEmail');
+    const forgotResetAlertBox = document.getElementById('forgotResetAlertBox');
+
+    if (forgotEmailView) forgotEmailView.style.display = 'none';
+    if (forgotResetView) forgotResetView.style.display = 'flex';
+
+    if (targetEmailSpan) targetEmailSpan.textContent = email;
+
+    if (forgotResetAlertBox) {
+      if (options.devCode) {
+        forgotResetAlertBox.className = 'auth-inline-alert warning';
+        forgotResetAlertBox.style.display = 'block';
+        forgotResetAlertBox.innerHTML = `
+          <div style="font-weight: 700; margin-bottom: 6px; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>E-Posta Servis Bildirimi</span>
+          </div>
+          <div style="font-size: 13px; line-height: 1.5; color: #e2e8f0;">
+            Şifre sıfırlama kodunuz: <strong style="letter-spacing: 2px; font-size: 16px; color: #10b981; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">${options.devCode}</strong>
+          </div>
+          <div style="font-size: 11px; margin-top: 6px; color: #94a3b8;">
+            (Kodu aşağıdaki 6 kutucuğa girerek yeni şifrenizi belirleyebilirsiniz.)
+          </div>
+        `;
+      } else {
+        forgotResetAlertBox.style.display = 'none';
+        forgotResetAlertBox.innerHTML = '';
+      }
+    }
+
+    // Reset OTP boxes
+    const boxes = document.querySelectorAll('#forgotOtpInputsRow .forgot-otp-box');
+    boxes.forEach(b => {
+      b.value = '';
+      b.classList.remove('filled');
+      b.style.borderColor = '';
+    });
+    const hiddenCode = document.getElementById('fullForgotOtpCode');
+    if (hiddenCode) hiddenCode.value = '';
+
+    const newPassInput = document.getElementById('forgotNewPassword');
+    if (newPassInput) newPassInput.value = '';
+    const confirmPassInput = document.getElementById('forgotConfirmPassword');
+    if (confirmPassInput) confirmPassInput.value = '';
+
+    // Start 10-minute expiry countdown
+    this.startForgotCountdown(600);
+
+    // Start 60-second resend cooldown
+    this.startForgotResendCooldown(60);
+
+    setTimeout(() => {
+      if (boxes[0]) boxes[0].focus();
+    }, 120);
+  }
+
+  startForgotCountdown(seconds) {
+    if (this.forgotCountdownInterval) {
+      clearInterval(this.forgotCountdownInterval);
+    }
+
+    let remaining = seconds;
+    const countdownEl = document.getElementById('forgotCountdown');
+
+    const updateDisplay = () => {
+      const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+      const secs = (remaining % 60).toString().padStart(2, '0');
+      if (countdownEl) {
+        countdownEl.textContent = `${mins}:${secs}`;
+      }
+    };
+
+    updateDisplay();
+
+    this.forgotCountdownInterval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(this.forgotCountdownInterval);
+        this.forgotCountdownInterval = null;
+        if (countdownEl) countdownEl.textContent = 'Süresi Doldu';
+        this.showAuthAlert('forgotReset', 'Sıfırlama kodunun süresi doldu. Lütfen yeni kod isteyiniz.', 'warning');
+      } else {
+        updateDisplay();
+      }
+    }, 1000);
+  }
+
+  startForgotResendCooldown(seconds) {
+    if (this.forgotResendCooldownInterval) {
+      clearInterval(this.forgotResendCooldownInterval);
+    }
+
+    let remaining = seconds;
+    const resendBtn = document.getElementById('btnForgotResendCode');
+    const timerText = document.getElementById('forgotResendTimerText');
+
+    if (resendBtn) resendBtn.disabled = true;
+
+    const updateDisplay = () => {
+      if (timerText) timerText.textContent = `(${remaining}s)`;
+    };
+
+    updateDisplay();
+
+    this.forgotResendCooldownInterval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(this.forgotResendCooldownInterval);
+        this.forgotResendCooldownInterval = null;
+        if (resendBtn) resendBtn.disabled = false;
+        if (timerText) timerText.textContent = '';
+      } else {
+        updateDisplay();
+      }
+    }, 1000);
+  }
+
+  async resendForgotPasswordCode() {
+    if (!this.pendingForgotPasswordEmail) {
+      this.showToast('Kayıtlı e-posta bulunamadı. Lütfen e-postanızı tekrar giriniz.', 'error');
+      this.backToForgotPasswordEmail();
+      return;
+    }
+
+    const resendBtn = document.getElementById('btnForgotResendCode');
+    if (resendBtn) {
+      resendBtn.disabled = true;
+      resendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gönderiliyor...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/resend-forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: this.pendingForgotPasswordEmail })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Kod yeniden gönderilemedi.');
+      }
+
+      this.showToast(data.message || 'Yeni sıfırlama kodu e-postanıza gönderildi.', 'success');
+
+      // Update alert if dev code
+      const alertBox = document.getElementById('forgotResetAlertBox');
+      if (alertBox) {
+        if (data.devCode) {
+          alertBox.className = 'auth-inline-alert warning';
+          alertBox.style.display = 'block';
+          alertBox.innerHTML = `
+            <div style="font-weight: 700; margin-bottom: 6px; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Yeni Kod Oluşturuldu</span>
+            </div>
+            <div style="font-size: 13px; line-height: 1.5; color: #e2e8f0;">
+              Yeni sıfırlama kodunuz: <strong style="letter-spacing: 2px; font-size: 16px; color: #10b981; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 6px;">${data.devCode}</strong>
+            </div>
+          `;
+        }
+      }
+
+      // Reset OTP boxes
+      const boxes = document.querySelectorAll('#forgotOtpInputsRow .forgot-otp-box');
+      boxes.forEach(b => {
+        b.value = '';
+        b.classList.remove('filled');
+        b.style.borderColor = '';
+      });
+      const hiddenCode = document.getElementById('fullForgotOtpCode');
+      if (hiddenCode) hiddenCode.value = '';
+
+      this.startForgotCountdown(600);
+      this.startForgotResendCooldown(60);
+
+      if (boxes[0]) boxes[0].focus();
+    } catch (err) {
+      this.showAuthAlert('forgotReset', err.message, 'error');
+      this.showToast(err.message, 'error');
+      if (resendBtn) resendBtn.disabled = false;
+    } finally {
+      if (resendBtn && this.forgotResendCooldownInterval) {
+        resendBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Kodu Tekrar Gönder <span id="forgotResendTimerText"></span>';
+      }
+    }
+  }
+
+  async handleResetPasswordSubmit(e) {
+    e.preventDefault();
+    this.clearAuthAlerts();
+
+    const boxes = document.querySelectorAll('#forgotOtpInputsRow .forgot-otp-box');
+    const code = Array.from(boxes).map(b => b.value.trim()).join('') || (document.getElementById('fullForgotOtpCode')?.value || '').trim();
+    const newPassword = (document.getElementById('forgotNewPassword')?.value || '').trim();
+    const confirmPassword = (document.getElementById('forgotConfirmPassword')?.value || '').trim();
+    const submitBtn = document.getElementById('btnForgotResetSubmit');
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Şifremi Yenile ve Giriş Yap';
+
+    if (!code || code.length !== 6) {
+      this.showAuthAlert('forgotReset', 'Lütfen 6 haneli doğrulama kodunu eksiksiz giriniz.', 'warning');
+      this.showToast('Lütfen 6 haneli doğrulama kodunu giriniz.', 'warning');
+      if (boxes[0]) boxes[0].focus();
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      this.showAuthAlert('forgotReset', 'Yeni şifreniz en az 6 karakter olmalıdır.', 'warning');
+      this.showToast('Yeni şifreniz en az 6 karakter olmalıdır.', 'warning');
+      document.getElementById('forgotNewPassword')?.classList.add('input-error');
+      document.getElementById('forgotNewPassword')?.focus();
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      this.showAuthAlert('forgotReset', 'Girdiğiniz yeni şifreler birbiriyle eşleşmiyor.', 'warning');
+      this.showToast('Girdiğiniz yeni şifreler eşleşmiyor.', 'warning');
+      document.getElementById('forgotConfirmPassword')?.classList.add('input-error');
+      document.getElementById('forgotConfirmPassword')?.focus();
+      return;
+    }
+
+    if (!this.pendingForgotPasswordEmail) {
+      this.showToast('İşlem süresi dolmuş veya e-posta bulunamadı. Lütfen tekrar başlayınız.', 'error');
+      this.backToForgotPasswordEmail();
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Şifre Güncelleniyor...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: this.pendingForgotPasswordEmail,
+          code: code,
+          newPassword: newPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Şifre sıfırlama işlemi başarısız oldu.');
+      }
+
+      // Successful reset and auto-login
+      this.token = data.token;
+      this.currentUser = data.user;
+      localStorage.setItem('alsat_token', data.token);
+      localStorage.setItem('alsat_user', JSON.stringify(data.user));
+
+      this.pendingForgotPasswordEmail = null;
+      if (this.forgotCountdownInterval) clearInterval(this.forgotCountdownInterval);
+      if (this.forgotResendCooldownInterval) clearInterval(this.forgotResendCooldownInterval);
+
+      this.updateAuthUI();
+      this.closeAuthModal(true);
+      this.showToast(data.message || 'Şifreniz başarıyla güncellendi ve giriş yapıldı!', 'success');
+
+      if (typeof this.authReturnAction === 'function') {
+        const action = this.authReturnAction;
+        this.authReturnAction = null;
+        action();
+      }
+    } catch (err) {
+      this.showAuthAlert('forgotReset', err.message, 'error');
+      this.showToast(err.message, 'error');
+      boxes.forEach(b => {
+        b.style.borderColor = '#ef4444';
+        setTimeout(() => { b.style.borderColor = ''; }, 2000);
+      });
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    }
+  }
+
   logout() {
     this.token = null;
     this.currentUser = null;
@@ -1176,6 +1648,12 @@ class MarketplaceApp {
     if (loginForm) loginForm.reset();
     if (registerForm) registerForm.reset();
 
+    const forgotSendForm = document.getElementById('forgotPasswordSendForm');
+    if (forgotSendForm) forgotSendForm.reset();
+
+    const forgotResetForm = document.getElementById('forgotPasswordResetForm');
+    if (forgotResetForm) forgotResetForm.reset();
+
     // 2. İlçe dropdown'ını ve il seçimini temizle
     const regDistrict = document.getElementById('regDistrict');
     if (regDistrict) {
@@ -1190,7 +1668,7 @@ class MarketplaceApp {
     }
 
     // 3. Şifre alanlarının görünürlüğünü gizle (varsayılan password tipine getir)
-    ['loginPassword', 'regPassword'].forEach(id => {
+    ['loginPassword', 'regPassword', 'forgotNewPassword', 'forgotConfirmPassword'].forEach(id => {
       const input = document.getElementById(id);
       if (input) input.type = 'password';
       const wrapper = input ? input.closest('.password-input-wrapper') : null;
@@ -1211,7 +1689,16 @@ class MarketplaceApp {
       clearInterval(this.resendCooldownInterval);
       this.resendCooldownInterval = null;
     }
+    if (this.forgotCountdownInterval) {
+      clearInterval(this.forgotCountdownInterval);
+      this.forgotCountdownInterval = null;
+    }
+    if (this.forgotResendCooldownInterval) {
+      clearInterval(this.forgotResendCooldownInterval);
+      this.forgotResendCooldownInterval = null;
+    }
     this.pendingRegistration = null;
+    this.pendingForgotPasswordEmail = null;
 
     // 5. OTP kutucuklarını temizle
     const otpBoxes = document.querySelectorAll('.otp-box');
@@ -1220,9 +1707,17 @@ class MarketplaceApp {
       b.classList.remove('filled');
       b.style.borderColor = '';
     });
+    const hiddenCode = document.getElementById('fullForgotOtpCode');
+    if (hiddenCode) hiddenCode.value = '';
 
     const verifyView = document.getElementById('emailVerifyView');
     if (verifyView) verifyView.style.display = 'none';
+
+    const forgotEmailView = document.getElementById('forgotPasswordEmailView');
+    if (forgotEmailView) forgotEmailView.style.display = 'none';
+
+    const forgotResetView = document.getElementById('forgotPasswordResetView');
+    if (forgotResetView) forgotResetView.style.display = 'none';
 
     const devBanner = document.getElementById('devCodeBanner');
     if (devBanner) devBanner.style.display = 'none';
@@ -1238,6 +1733,18 @@ class MarketplaceApp {
     if (verifyBtn) {
       verifyBtn.disabled = false;
       verifyBtn.innerHTML = 'Doğrula ve Hesabı Aç';
+    }
+
+    const forgotSendBtn = document.getElementById('btnForgotSendSubmit');
+    if (forgotSendBtn) {
+      forgotSendBtn.disabled = false;
+      forgotSendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Sıfırlama Kodu Gönder';
+    }
+
+    const forgotResetBtn = document.getElementById('btnForgotResetSubmit');
+    if (forgotResetBtn) {
+      forgotResetBtn.disabled = false;
+      forgotResetBtn.innerHTML = '<i class="fa-solid fa-check"></i> Şifremi Yenile ve Giriş Yap';
     }
 
     // 7. Sekmeleri görünür kıl
@@ -1284,6 +1791,11 @@ class MarketplaceApp {
         const confirmLeave = window.confirm('E-posta doğrulama işlemi devam ediyor. Çıkmak istediğinize emin misiniz?');
         if (!confirmLeave) return;
       }
+      const forgotResetView = document.getElementById('forgotPasswordResetView');
+      if (forgotResetView && forgotResetView.style.display !== 'none' && this.pendingForgotPasswordEmail) {
+        const confirmLeave = window.confirm('Şifre sıfırlama işlemi devam ediyor. Çıkmak istediğinize emin misiniz?');
+        if (!confirmLeave) return;
+      }
     }
     const modal = document.getElementById('authModal');
     if (modal && modal.open) modal.close();
@@ -1292,6 +1804,18 @@ class MarketplaceApp {
 
   switchAuthTab(tab) {
     this.clearAuthAlerts();
+
+    const authTabs = document.querySelector('.auth-tabs');
+    if (authTabs) authTabs.style.display = 'flex';
+
+    const forgotEmailView = document.getElementById('forgotPasswordEmailView');
+    if (forgotEmailView) forgotEmailView.style.display = 'none';
+
+    const forgotResetView = document.getElementById('forgotPasswordResetView');
+    if (forgotResetView) forgotResetView.style.display = 'none';
+
+    const verifyView = document.getElementById('emailVerifyView');
+    if (verifyView) verifyView.style.display = 'none';
 
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');

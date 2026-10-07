@@ -2573,6 +2573,20 @@ select:-webkit-autofill {
   box-shadow: var(--shadow-sm);
 }
 
+.forgot-pass-link {
+  font-size: 0.82rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.forgot-pass-link:hover {
+  color: #ff7a00;
+  text-decoration: underline;
+}
+
 /* Auth Inline Alert Box */
 .auth-inline-alert {
   display: flex;

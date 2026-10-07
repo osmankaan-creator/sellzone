@@ -587,7 +587,10 @@
           <input type="text" id="loginEmail" required placeholder="ornek@email.com veya 05XX XXX XX XX" autocomplete="username">
         </div>
         <div class="form-group">
-          <label for="loginPassword" class="form-label">Şifre</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <label for="loginPassword" class="form-label" style="margin-bottom:0;">Şifre</label>
+            <a href="javascript:void(0)" onclick="app.showForgotPasswordView()" class="forgot-pass-link">Şifremi Unuttum?</a>
+          </div>
           <div class="password-input-wrapper">
             <input type="password" id="loginPassword" required placeholder="******">
             <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('loginPassword', this)" title="Şifreyi Göster" tabindex="-1">
@@ -697,6 +700,103 @@
           </button>
           <button type="button" class="btn-link text-muted" onclick="app.backToRegisterForm()">
             <i class="fa-solid fa-arrow-left"></i> Bilgileri Düzenle
+          </button>
+        </div>
+      </div>
+
+      <!-- Forgot Password - Step 1: Request Code -->
+      <div id="forgotPasswordEmailView" style="display:none;" class="verify-step-container">
+        <div id="forgotAlertBox" class="auth-inline-alert" style="display:none;"></div>
+        <div class="verify-badge-header">
+          <div class="verify-icon-bubble" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(249, 115, 22, 0.2)); border-color: rgba(239, 68, 68, 0.4); color: #ef4444; box-shadow: 0 0 24px rgba(239, 68, 68, 0.25);">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <h3>Şifremi Unuttum</h3>
+          <p class="verify-desc">
+            Kayıtlı e-posta adresinizi giriniz. Size 6 haneli şifre sıfırlama kodu göndereceğiz.
+          </p>
+        </div>
+
+        <form id="forgotPasswordSendForm" onsubmit="app.handleForgotPasswordSendCode(event)">
+          <div class="form-group">
+            <label for="forgotEmail" class="form-label">E-Posta Adresi</label>
+            <input type="email" id="forgotEmail" required placeholder="ornek@email.com" autocomplete="email">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="btnForgotSendSubmit">
+            <i class="fa-solid fa-paper-plane"></i> Sıfırlama Kodu Gönder
+          </button>
+        </form>
+
+        <div class="verify-actions-row" style="margin-top: 8px; justify-content: center;">
+          <button type="button" class="btn-link text-muted" onclick="app.backToLoginForm()">
+            <i class="fa-solid fa-arrow-left"></i> Giriş Yap'a Dön
+          </button>
+        </div>
+      </div>
+
+      <!-- Forgot Password - Step 2: Enter Code & New Password -->
+      <div id="forgotPasswordResetView" style="display:none;" class="verify-step-container">
+        <div id="forgotResetAlertBox" class="auth-inline-alert" style="display:none;"></div>
+        <div class="verify-badge-header">
+          <div class="verify-icon-bubble" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2)); border-color: rgba(16, 185, 129, 0.4); color: #10b981; box-shadow: 0 0 24px rgba(16, 185, 129, 0.25);">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h3>Yeni Şifre Belirleme</h3>
+          <p class="verify-desc">
+            <span id="forgotTargetEmail" class="highlight-email">ornek@email.com</span> adresine gönderilen 6 haneli kodu ve yeni şifrenizi giriniz.
+          </p>
+        </div>
+
+        <form id="forgotPasswordResetForm" onsubmit="app.handleResetPasswordSubmit(event)">
+          <div class="form-group otp-group">
+            <label class="form-label text-center">6 Haneli Sıfırlama Kodu</label>
+            <div class="otp-inputs-row" id="forgotOtpInputsRow">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-box forgot-otp-box" data-idx="0" autocomplete="off" />
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-box forgot-otp-box" data-idx="1" autocomplete="off" />
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-box forgot-otp-box" data-idx="2" autocomplete="off" />
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-box forgot-otp-box" data-idx="3" autocomplete="off" />
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-box forgot-otp-box" data-idx="4" autocomplete="off" />
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-box forgot-otp-box" data-idx="5" autocomplete="off" />
+            </div>
+            <input type="hidden" id="fullForgotOtpCode" value="" />
+          </div>
+
+          <div class="verify-timer-row">
+            <span><i class="fa-regular fa-clock"></i> Kod Geçerlilik Süresi: <strong id="forgotCountdown">10:00</strong></span>
+          </div>
+
+          <div class="form-group">
+            <label for="forgotNewPassword" class="form-label">Yeni Şifre</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="forgotNewPassword" required minlength="6" placeholder="En az 6 karakter">
+              <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('forgotNewPassword', this)" title="Şifreyi Göster" tabindex="-1">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="forgotConfirmPassword" class="form-label">Yeni Şifre (Tekrar)</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="forgotConfirmPassword" required minlength="6" placeholder="Yeni şifrenizi tekrar girin">
+              <button type="button" class="password-toggle-btn" onclick="app.togglePasswordVisibility('forgotConfirmPassword', this)" title="Şifreyi Göster" tabindex="-1">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="btnForgotResetSubmit">
+            <i class="fa-solid fa-check"></i> Şifremi Yenile ve Giriş Yap
+          </button>
+        </form>
+
+        <div class="verify-actions-row">
+          <button type="button" class="btn-link" id="btnForgotResendCode" onclick="app.resendForgotPasswordCode()">
+            <i class="fa-solid fa-rotate-right"></i> Kodu Tekrar Gönder <span id="forgotResendTimerText"></span>
+          </button>
+          <button type="button" class="btn-link text-muted" onclick="app.backToForgotPasswordEmail()">
+            <i class="fa-solid fa-arrow-left"></i> E-Postayı Değiştir
           </button>
         </div>
       </div>
