@@ -798,6 +798,14 @@ class MarketplaceApp {
       return;
     }
 
+    const termsConsent = document.getElementById('regTermsConsent');
+    if (termsConsent && !termsConsent.checked) {
+      this.showAuthAlert('register', 'Lütfen Kullanıcı Sözleşmesi ve KVKK Metnini onaylayınız.', 'warning');
+      this.showToast('Lütfen Kullanıcı Sözleşmesi ve KVKK onay kutusunu işaretleyiniz.', 'warning');
+      termsConsent.focus();
+      return;
+    }
+
     const city = `${selectedCity}, ${selectedDistrict}`;
 
     const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Doğrulama Kodu Gönder';
@@ -3960,6 +3968,80 @@ class MarketplaceApp {
         btn.innerHTML = originalText;
       }
     }
+  }
+
+  /* ==========================================================================
+     LEGAL AGREEMENTS & INSTITUTIONAL MODAL
+     ========================================================================== */
+  openLegalModal(tabName = 'terms') {
+    const modal = document.getElementById('legalModal');
+    if (!modal) return;
+
+    this.switchLegalTab(tabName);
+
+    if (typeof modal.showModal === 'function') {
+      modal.showModal();
+    } else {
+      modal.setAttribute('open', '');
+    }
+  }
+
+  closeLegalModal() {
+    const modal = document.getElementById('legalModal');
+    if (!modal) return;
+
+    if (typeof modal.close === 'function') {
+      modal.close();
+    } else {
+      modal.removeAttribute('open');
+    }
+  }
+
+  switchLegalTab(tabName) {
+    const validTabs = ['terms', 'kvkk', 'rules', 'cookies', 'notice'];
+    if (!validTabs.includes(tabName)) tabName = 'terms';
+
+    // Update tab buttons
+    const tabButtons = {
+      terms: document.getElementById('legalTabBtnTerms'),
+      kvkk: document.getElementById('legalTabBtnKvkk'),
+      rules: document.getElementById('legalTabBtnRules'),
+      cookies: document.getElementById('legalTabBtnCookies'),
+      notice: document.getElementById('legalTabBtnNotice')
+    };
+
+    // Update tab panes
+    const tabPanes = {
+      terms: document.getElementById('legalPaneTerms'),
+      kvkk: document.getElementById('legalPaneKvkk'),
+      rules: document.getElementById('legalPaneRules'),
+      cookies: document.getElementById('legalPaneCookies'),
+      notice: document.getElementById('legalPaneNotice')
+    };
+
+    Object.keys(tabButtons).forEach(key => {
+      if (tabButtons[key]) {
+        if (key === tabName) {
+          tabButtons[key].classList.add('active');
+        } else {
+          tabButtons[key].classList.remove('active');
+        }
+      }
+    });
+
+    Object.keys(tabPanes).forEach(key => {
+      if (tabPanes[key]) {
+        if (key === tabName) {
+          tabPanes[key].style.display = 'block';
+        } else {
+          tabPanes[key].style.display = 'none';
+        }
+      }
+    });
+
+    // Scroll legal container to top
+    const bodyContainer = document.querySelector('.legal-body-container');
+    if (bodyContainer) bodyContainer.scrollTop = 0;
   }
 
   /* ==========================================================================

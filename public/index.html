@@ -288,23 +288,67 @@
       </div>
     </section>
 
-    <!-- Footer with Cloudflare Security Status -->
+    <!-- Comprehensive Marketplace Footer -->
     <footer class="app-footer">
-      <div class="footer-container">
-        <div class="footer-left">
-          <div class="brand-logo-small"><i class="fa-solid fa-cube"></i></div>
-          <span>Sell<strong>Zone</strong> • Hızlı Sat, Akıllı Al</span>
+      <div class="footer-main-grid">
+        <!-- Col 1: Brand & Yer Sağlayıcı -->
+        <div class="footer-col footer-col-brand">
+          <div class="footer-brand-header">
+            <div class="brand-logo-small"><i class="fa-solid fa-cube"></i></div>
+            <span class="footer-brand-title">Sell<strong>Zone</strong></span>
+          </div>
+          <p class="footer-brand-desc">
+            Türkiye'nin modern, güvenli ve hızlı ikinci el alışveriş pazaryeri. Akıllı teklif, anlık mesajlaşma ve konum bazlı ilanlar ile güvenle al, sat.
+          </p>
+          <div class="footer-legal-badge">
+            <i class="fa-solid fa-shield-check text-primary"></i>
+            <span>5651 Sayılı Kanun Kapsamında <strong>Yer Sağlayıcı</strong>dır.</span>
+          </div>
         </div>
-        <div class="footer-center">
+
+        <!-- Col 2: Kurumsal & Yasal Sözleşmeler -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Kurumsal & Yasal</h4>
+          <ul class="footer-links-list">
+            <li><a href="javascript:void(0)" onclick="app.openLegalModal('terms')"><i class="fa-solid fa-file-contract"></i> Kullanıcı Sözleşmesi</a></li>
+            <li><a href="javascript:void(0)" onclick="app.openLegalModal('kvkk')"><i class="fa-solid fa-shield-halved"></i> KVKK Aydınlatma Metni</a></li>
+            <li><a href="javascript:void(0)" onclick="app.openLegalModal('rules')"><i class="fa-solid fa-ban"></i> İlan Verme Kuralları</a></li>
+            <li><a href="javascript:void(0)" onclick="app.openLegalModal('cookies')"><i class="fa-solid fa-cookie-bite"></i> Çerez Politikası</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Güvenlik & Destek -->
+        <div class="footer-col">
+          <h4 class="footer-col-title">Güvenlik & Destek</h4>
+          <ul class="footer-links-list">
+            <li><a href="javascript:void(0)" onclick="app.openLegalModal('notice')"><i class="fa-solid fa-envelope-open-text"></i> Hak İhlali (Uyar-Kaldır)</a></li>
+            <li><a href="javascript:void(0)" onclick="app.openLegalModal('rules')"><i class="fa-solid fa-triangle-exclamation"></i> Yasaklı Ürünler</a></li>
+            <li><a href="mailto:destek@sellzone.com"><i class="fa-solid fa-envelope"></i> destek@sellzone.com</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Altyapı & Sertifikalar -->
+        <div class="footer-col footer-col-security">
+          <h4 class="footer-col-title">Güvenlik Durumu</h4>
           <div class="cf-security-pill" id="footerCfStatus" title="Cloudflare DDoS & WAF Koruma Durumu">
             <i class="fa-brands fa-cloudflare text-orange"></i>
             <span id="cfStatusText">Cloudflare Koruma Sistemi Aktif</span>
             <span class="cf-pulse-dot"></span>
           </div>
+          <div class="ssl-security-pill">
+            <i class="fa-solid fa-lock text-green"></i>
+            <span>256-bit SSL Uçtan Uca Şifreleme</span>
+          </div>
         </div>
-        <div class="footer-right">
-          <span>© 2026 SellZone. Güvenli Alışveriş Bölgesi</span>
-        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        <p class="copyright-text">
+          © 2026 SellZone. Tüm hakları saklıdır.
+        </p>
+        <p class="footer-disclaimer-text">
+          SellZone platformunda yer alan ilan içerikleri, görseller ve fiyatlar ilan sahiplerinin sorumluluğundadır.
+        </p>
       </div>
     </footer>
 
@@ -585,6 +629,16 @@
               <i class="fa-solid fa-eye"></i>
             </button>
           </div>
+        </div>
+
+        <div class="legal-consent-row">
+          <label class="legal-checkbox-label">
+            <input type="checkbox" id="regTermsConsent" required checked>
+            <span>
+              <a href="javascript:void(0)" onclick="app.openLegalModal('terms')">Kullanıcı Sözleşmesi</a>'ni ve 
+              <a href="javascript:void(0)" onclick="app.openLegalModal('kvkk')">KVKK Aydınlatma Metni</a>'ni okudum, kabul ediyorum.
+            </span>
+          </label>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block" id="btnRegisterSubmit">
@@ -1130,6 +1184,225 @@
   </dialog>
 
 
+
+  <!-- 10. Legal Agreements & Institutional Information Modal -->
+  <dialog id="legalModal" class="app-dialog legal-dialog">
+    <div class="dialog-content legal-dialog-content">
+      <div class="legal-modal-header">
+        <div class="legal-modal-title-group">
+          <div class="legal-title-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+          <div>
+            <h3 class="legal-main-title">Yasal Bilgilendirme ve Sözleşmeler</h3>
+            <p class="legal-subtitle">SellZone Pazaryeri Kullanıcı Hakları ve Hukuki Şartlar</p>
+          </div>
+        </div>
+        <button class="dialog-close-btn" onclick="app.closeLegalModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Legal Navigation Tabs -->
+      <div class="legal-tabs-bar">
+        <button class="legal-tab-btn active" id="legalTabBtnTerms" onclick="app.switchLegalTab('terms')">
+          <i class="fa-solid fa-file-contract"></i> <span>Kullanıcı Sözleşmesi</span>
+        </button>
+        <button class="legal-tab-btn" id="legalTabBtnKvkk" onclick="app.switchLegalTab('kvkk')">
+          <i class="fa-solid fa-shield-halved"></i> <span>KVKK & Gizlilik</span>
+        </button>
+        <button class="legal-tab-btn" id="legalTabBtnRules" onclick="app.switchLegalTab('rules')">
+          <i class="fa-solid fa-ban"></i> <span>İlan Kuralları</span>
+        </button>
+        <button class="legal-tab-btn" id="legalTabBtnCookies" onclick="app.switchLegalTab('cookies')">
+          <i class="fa-solid fa-cookie-bite"></i> <span>Çerez Politikası</span>
+        </button>
+        <button class="legal-tab-btn" id="legalTabBtnNotice" onclick="app.switchLegalTab('notice')">
+          <i class="fa-solid fa-envelope-open-text"></i> <span>Uyar-Kaldır & Destek</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Legal Body -->
+      <div class="legal-body-container">
+        <!-- 1. Kullanıcı Sözleşmesi Pane -->
+        <div class="legal-pane" id="legalPaneTerms" style="display:block;">
+          <div class="legal-pane-badge">📜 Kullanıcı ve Üyelik Sözleşmesi</div>
+          <h4>1. Taraflar ve Kapsam</h4>
+          <p>
+            İşbu Kullanıcı Sözleşmesi ("Sözleşme"), SellZone platformunun sahibi ve işleticisi ile platforma üye olan veya platformu ziyaret eden tüm kullanıcılar ("Kullanıcı") arasında akdedilmiştir. Kullanıcı, platforma üye olarak veya platformu kullanarak işbu sözleşmenin tüm hükümlerini okuduğunu, anladığını ve gayrikabili rücu kabul ettiğini beyan eder.
+          </p>
+
+          <h4>2. Yer Sağlayıcılık Statüsü (5651 ve 6563 Sayılı Kanunlar)</h4>
+          <p>
+            SellZone, <strong>5651 sayılı "İnternet Ortamında Yapılan Yayınların Düzenlenmesi ve Bu Yayınlar Yoluyla İşlenen Suçlarla Mücadele Edilmesi Hakkında Kanun"</strong> ve <strong>6563 sayılı "Elektronik Ticaretin Düzenlenmesi Hakkında Kanun"</strong> kapsamında <strong>Yer Sağlayıcı (Hosting Provider)</strong> sıfatına haizdir.
+          </p>
+          <div class="legal-callout info">
+            <i class="fa-solid fa-circle-info"></i>
+            <div>
+              SellZone, kullanıcılar tarafından sisteme yüklenen ilan içeriklerini, açıklamaları, ürün fotoğraflarını ve fiyatları önceden denetlemek veya hukuka aykırı bir faaliyetin olup olmadığını araştırmakla kanunen yükümlü değildir. İlanların hukuki, cezai ve mali tüm sorumluluğu münhasıran ilanı yayınlayan kullanıcıya aittir.
+            </div>
+          </div>
+
+          <h4>3. Alım - Satım ve Ticari Sorumluluk Reddi</h4>
+          <p>
+            SellZone, kullanıcıların ikinci el ve sıfır eşyalarını ilan vererek duyurdukları ve diğer kullanıcılarla doğrudan iletişime geçtikleri bir ilan pazaryeridir. SellZone alıcı ve satıcı arasındaki pazarlık, satış sözleşmesi, ödeme, faturalandırma veya teslimat süreçlerinin tarafı, kefili veya garantörü değildir. Taraflar arasındaki her türlü anlaşmazlık genel hükümlere ve Tüketicinin Korunması mevzuatına göre taraflar arasında çözümlenir.
+          </p>
+
+          <h4>4. Üyelik Şartları ve Hesap Güvenliği</h4>
+          <ul>
+            <li>SellZone platformuna yalnızca 18 yaşını doldurmuş fiil ehliyetine sahip gerçek kişiler üye olabilir.</li>
+            <li>Kullanıcı, kayıt esnasında verdiği e-posta, telefon ve konum bilgilerinin doğru ve güncel olduğunu taahhüt eder.</li>
+            <li>Hesap şifresinin gizliliği ve güvenliği tamamen kullanıcının sorumluluğundadır.</li>
+            <li>Kullanıcılar istedikleri zaman profil ayarlarından <strong>"Hesabımı Sil"</strong> butonunu kullanarak üyeliklerini tek tıkla kalıcı olarak silebilirler.</li>
+          </ul>
+
+          <h4>5. Yasaklı Eylemler ve Yaptırımlar</h4>
+          <p>
+            Kullanıcılar platformu dolandırıcılık, yanıltma, telif hakkı ihlali, sahte ürün satışı veya başkalarını taciz etme amacıyla kullanamaz. SellZone, bu kurallara aykırı hareket eden kullanıcıların ilanlarını derhal yayından kaldırma ve üyeliklerini askıya alma hakkını saklı tutar.
+          </p>
+
+          <h4>6. Uyuşmazlıkların Çözümü</h4>
+          <p>
+            İşbu sözleşmenin uygulanmasından ve yorumlanmasından doğacak uyuşmazlıklarda Türkiye Cumhuriyeti Hukuku uygulanacak olup, İstanbul (Çağlayan) Mahkemeleri ve İcra Daireleri münhasıran yetkilidir.
+          </p>
+        </div>
+
+        <!-- 2. KVKK & Gizlilik Pane -->
+        <div class="legal-pane" id="legalPaneKvkk" style="display:none;">
+          <div class="legal-pane-badge">🔒 KVKK Aydınlatma Metni & Gizlilik Politikası</div>
+          <p>
+            SellZone olarak kişisel verilerinizin güvenliğine ve gizliliğine en üst düzeyde önem veriyoruz. İşbu aydınlatma metni, <strong>6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK")</strong> Madde 10 uyarınca sizleri bilgilendirmek amacıyla hazırlanmıştır.
+          </p>
+
+          <h4>1. Veri Sorumlusu</h4>
+          <p>
+            KVKK kapsamında SellZone platformu Veri Sorumlusu sıfatına sahiptir.
+          </p>
+
+          <h4>2. İşlenen Kişisel Veri Kategorileri</h4>
+          <ul>
+            <li><strong>Kimlik Verileri:</strong> Ad ve soyadınız.</li>
+            <li><strong>İletişim Verileri:</strong> E-posta adresiniz, telefon numaranız, kayıtlı il ve ilçe bilginiz.</li>
+            <li><strong>İşlem Güvenliği Verileri:</strong> Giriş IP adresleriniz, oturum belirteçleri (tokens), tek yönlü şifrelenmiş parola hash'leri, trafik logları.</li>
+            <li><strong>İlan ve İçerik Verileri:</strong> Platforma yüklediğiniz ilan fotoğrafları, ürün açıklamaları, favorileriniz ve site içi sohbet mesajlarınız.</li>
+          </ul>
+
+          <h4>3. Kişisel Verilerin İşlenme Amaçları</h4>
+          <p>
+            Kişisel verileriniz; üyeliğinizin oluşturulması ve doğrulanması, tek kullanımlık 6 haneli güvenlik kodunun iletilmesi, ilan yayınlama ve mesajlaşma hizmetlerinin sunulması, 5651 sayılı kanun gereği zorunlu trafik kayıtlarının tutulması ve platform güvenliğinin (DDoS ve bot saldırılarının önlenmesi) sağlanması amaçlarıyla işlenmektedir.
+          </p>
+
+          <h4>4. Kişisel Verilerin Aktarımı</h4>
+          <div class="legal-callout success">
+            <i class="fa-solid fa-shield-heart"></i>
+            <div>
+              <strong>Verileriniz Asla Satılmaz:</strong> SellZone, kullanıcıların kişisel verilerini üçüncü şahıslara, pazarlama şirketlerine veya reklam verenlere satmaz ya da ticari amaçla kiralamaz.
+            </div>
+          </div>
+          <p>
+            Verileriniz yalnızca yasal bir zorunluluk (Cumhuriyet Savcılıkları, mahkemeler ve yetkili kamu kurumlarının yasal talepleri) durumunda veya hizmetin teknik olarak ifası amacıyla güvenli altyapı sağlayıcılarına (Resend e-posta API, Cloudflare güvenlik altyapısı) aktarılabilir.
+          </p>
+
+          <h4>5. İlgili Kişi Olarak Haklarınız (KVKK Madde 11)</h4>
+          <p>
+            Kullanıcılarımız KVKK'nın 11. maddesi uyarınca; verilerinin işlenip işlenmediğini öğrenme, yanlış verilerin düzeltilmesini isteme ve diledikleri zaman hesaplarını ve verilerini tamamen sildirme hakkına sahiptir. Sitemizdeki <strong>"Hesabımı Sil"</strong> özelliği sayesinde herhangi bir bürokratik başvuruya gerek kalmaksızın tüm profil verilerinizi, ilanlarınızı ve mesajlarınızı veritabanından kalıcı olarak silebilirsiniz.
+          </p>
+        </div>
+
+        <!-- 3. İlan Kuralları & Yasaklı Ürünler Pane -->
+        <div class="legal-pane" id="legalPaneRules" style="display:none;">
+          <div class="legal-pane-badge">🚫 İlan Verme Kuralları ve Yasaklı Ürünler</div>
+          <h4>1. Genel İlan Kuralları</h4>
+          <ul>
+            <li>Her bir ürün için yalnızca 1 (bir) adet ilan açılabilir; mükerrer ilanlar silinir.</li>
+            <li>İlan başlığı ve açıklaması ürünü doğru yansıtmalı, yanıltıcı veya tık tuzağı (clickbait) ifadeler içermemelidir.</li>
+            <li>İlanlarda ürünün güncel ve gerçek fotoğrafları kullanılmalıdır. İnternetten alıntı veya başka satıcıların fotoğrafları kullanılamaz.</li>
+            <li>İlanda belirtilen fiyat güncel satış fiyatı olmalı, sembolik veya aldatıcı fiyatlandırma yapılmamalıdır.</li>
+            <li>İlan konumu (İl ve İlçe), ürünün bulunduğu gerçek konum ile uyuşmalıdır.</li>
+          </ul>
+
+          <h4>2. Kesinlikle Yasaklı Ürün ve Hizmetler Listesi</h4>
+          <p>
+            Aşağıdaki ürün veya hizmetlerin SellZone üzerinde satışa sunulması kesinlikle yasaktır:
+          </p>
+          <div class="legal-callout warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>
+              <strong>Yasaklı Ürünler:</strong>
+              <ul style="margin: 6px 0 0 16px; padding: 0;">
+                <li>Reçeteli veya reçetesiz ilaçlar, tıbbi cihazlar ve aşılar</li>
+                <li>Tütün, tütün mamulleri, elektronik sigara, likit ve alkollü içecekler</li>
+                <li>Ateşli silahlar, kurusıkı tabancalar, mühimmat, biber gazı ve kesici-delici aletler</li>
+                <li>Sahte, replika, imitasyon veya çalıntı ürünler</li>
+                <li>IMEI kaydı bulunmayan kaçak telefon ve elektronik cihazlar</li>
+                <li>Canlı hayvan satışı veya nesli tükenmekte olan yaban hayatı ürünleri</li>
+                <li>Fikri mülkiyet ihlali oluşturan korsan yazılım, film, oyun hesapları ve lisans anahtarları</li>
+                <li>Bahis, kumar araçları ve para yerine geçen kripto varlıklar</li>
+                <li>Resmi kimlik belgeleri, pasaportlar ve tescil evrakları</li>
+              </ul>
+            </div>
+          </div>
+          <p>
+            Yasaklı ürün ilanı veren hesaplar derhal kısıtlanır ve mevzuat gereği adli makamlarla iş birliği yapılır.
+          </p>
+        </div>
+
+        <!-- 4. Çerez Politikası Pane -->
+        <div class="legal-pane" id="legalPaneCookies" style="display:none;">
+          <div class="legal-pane-badge">🍪 Çerez (Cookie) Kullanım Politikası</div>
+          <h4>1. Çerez Nedir?</h4>
+          <p>
+            Çerezler (Cookies), ziyaret ettiğiniz internet siteleri tarafından tarayıcınız aracılığıyla cihazınıza kaydedilen küçük metin dosyalarıdır.
+          </p>
+
+          <h4>2. SellZone'da Kullanılan Çerezler</h4>
+          <ul>
+            <li><strong>Zorunlu Oturum Çerezleri:</strong> Giriş yaptığınızda oturumunuzun açık kalmasını sağlayan güvenli token (`alsat_token`). Bu çerez olmadan siteye giriş yapılamaz.</li>
+            <li><strong>Tercih Çerezleri:</strong> Seçtiğiniz temayı (Karanlık veya Aydınlık mod) hatırlayan yerel depolama ayarı (`alsat_theme`).</li>
+            <li><strong>Güvenlik Çerezleri:</strong> Cloudflare Turnstile bot ve DDoS koruma sisteminin sitemizi otomatik bot saldırılarından korumak için kullandığı güvenlik tanımlayıcıları.</li>
+          </ul>
+
+          <h4>3. Çerezleri Nasıl Yönetebilirsiniz?</h4>
+          <p>
+            Tarayıcınızın (Chrome, Safari, Firefox, Edge vb.) ayarlar menüsünden çerezleri istediğiniz zaman silebilir veya yeni çerez kabul edilmesini engelleyebilirsiniz. Zorunlu çerezleri engellemeniz durumunda platformda oturum açma özellikleri çalışmayabilir.
+          </p>
+        </div>
+
+        <!-- 5. Uyar-Kaldır & İletişim Pane -->
+        <div class="legal-pane" id="legalPaneNotice" style="display:none;">
+          <div class="legal-pane-badge">📩 Hak İhlali Bildirimi (5651 Uyar - Kaldır Sistemi)</div>
+          <h4>1. Uyar - Kaldır Prosedürü</h4>
+          <p>
+            5651 sayılı Kanun'un 5. maddesi uyarınca Yer Sağlayıcı olan SellZone, hak sahiplerinin veya kamu kurumlarının bildirimleri doğrultusunda hukuka aykırı içerikleri yayından kaldırmaktadır ("Uyar-Kaldır" prensibi).
+          </p>
+
+          <h4>2. Nasıl Bildirimde Bulunabilirsiniz?</h4>
+          <p>
+            Bir ilanın fikri mülkiyet hakkınızı ihlal ettiğini, sahte ürün içerdiğini veya mevzuata aykırı olduğunu düşünüyorsanız lütfen aşağıdaki bilgilerle birlikte resmi destek e-posta adresimize bildirimde bulununuz:
+          </p>
+          <div class="legal-contact-card">
+            <div class="contact-card-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+            <div class="contact-card-info">
+              <div class="contact-card-label">Resmi Bildirim ve Destek E-Postası</div>
+              <a href="mailto:destek@sellzone.com" class="contact-card-email">destek@sellzone.com</a>
+              <div class="contact-card-sub">Bildirimleriniz en geç <strong>48 saat</strong> içerisinde hukuk ve güvenlik ekibimiz tarafından incelenir.</div>
+            </div>
+          </div>
+
+          <h4>3. Bildirimde Bulunması Gereken Bilgiler:</h4>
+          <ul>
+            <li>Şikayet konusu ilanın bağlantısı (URL) veya ilan başlığı.</li>
+            <li>İhlal edildiği iddia edilen hakkın türü (Marka, Telif, Kişilik Hakları vb.) ve ispat edici bilgi/belgeler.</li>
+            <li>Bildirimde bulunan hak sahibinin veya yetkili temsilcisinin adı, soyadı ve iletişim bilgileri.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Legal Modal Footer -->
+      <div class="legal-modal-footer">
+        <span class="legal-footer-date"><i class="fa-regular fa-clock"></i> Son Güncelleme: 1 Ekim 2026</span>
+        <button type="button" class="btn btn-primary" onclick="app.closeLegalModal()">
+          <i class="fa-solid fa-check"></i> Anladım ve Kapat
+        </button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Datalist for Turkish Cities Autocomplete -->
   <datalist id="turkeyCitiesList"></datalist>
