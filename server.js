@@ -312,7 +312,29 @@ app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req
       return res.status(400).json({ error: 'Bu e-posta adresi ile zaten kayıtlı bir hesap var.' });
     }
 
-    // Generate secure 6-digit numeric OTP code
+    // If SMTP is not yet configured, create account directly so users are never blocked
+    if (!isSmtpConfigured()) {
+      const passHash = hashPassword(password);
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
+      const result = db.prepare(`
+        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
+        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
+      `).run(name.trim(), cleanEmail, phone ? phone.trim() : '', passHash, city ? city.trim() : 'İstanbul', avatarUrl);
+
+      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = crypto.randomUUID();
+      saveSession(token, newUser.id);
+
+      return res.json({
+        success: true,
+        requiresVerification: false,
+        token,
+        user: newUser,
+        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
+      });
+    }
+
+    // SMTP is configured: Generate secure 6-digit numeric OTP code
     const code = crypto.randomInt(100000, 1000000).toString();
 
     // Remove any previous active codes for this email
@@ -329,7 +351,7 @@ app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req
     );
 
     // Send branded SellZone email
-    const mailResult = await sendVerificationEmail({
+    await sendVerificationEmail({
       to: cleanEmail,
       name: name.trim(),
       code: code
@@ -337,10 +359,10 @@ app.post('/api/auth/send-verification', authRateLimiter.middleware(), async (req
 
     res.json({
       success: true,
+      requiresVerification: true,
       email: cleanEmail,
       message: `${cleanEmail} adresine 6 haneli doğrulama kodu gönderildi.`,
-      expiresInSeconds: 600,
-      devCode: mailResult.devCode || null
+      expiresInSeconds: 600
     });
   } catch (err) {
     console.error('Send verification error:', err);
@@ -493,7 +515,28 @@ app.post('/api/auth/register', authRateLimiter.middleware(), async (req, res) =>
       return res.status(400).json({ error: 'Bu e-posta adresi ile zaten bir hesap var.' });
     }
 
-    // Trigger verification code
+    // If SMTP is not yet configured on the server, create the account directly so users are never blocked
+    if (!isSmtpConfigured()) {
+      const passHash = hashPassword(password);
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`;
+      const result = db.prepare(`
+        INSERT INTO users (name, email, phone, password_hash, city, avatar, bio, email_verified)
+        VALUES (?, ?, ?, ?, ?, ?, 'SellZone üyesi', 1)
+      `).run(name.trim(), cleanEmail, phone || '', passHash, city || 'İstanbul', avatarUrl);
+
+      const newUser = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = crypto.randomUUID();
+      saveSession(token, newUser.id);
+
+      return res.json({
+        requiresVerification: false,
+        token,
+        user: newUser,
+        message: `Hesabınız başarıyla oluşturuldu! Hoş geldiniz, ${newUser.name}!`
+      });
+    }
+
+    // SMTP is configured: Trigger verification code
     const generatedCode = crypto.randomInt(100000, 1000000).toString();
     db.prepare("DELETE FROM email_verifications WHERE email = ? AND type = 'register'").run(cleanEmail);
     db.prepare(`

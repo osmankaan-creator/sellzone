@@ -667,11 +667,19 @@ class MarketplaceApp {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // Save pending registration details
-      this.pendingRegistration = { name, email, password, phone, city };
+      // If SMTP is not configured, server activated account immediately
+      if (data.requiresVerification === false && data.token) {
+        this.token = data.token;
+        this.currentUser = data.user;
+        localStorage.setItem('alsat_token', this.token);
+        localStorage.setItem('alsat_user', JSON.stringify(this.currentUser));
+        this.completeLoginSuccess(data.message || `Hoş geldiniz, ${this.currentUser.name}!`);
+        return;
+      }
 
-      // Switch view to OTP verification
-      this.showVerificationView(email, data.devCode);
+      // If SMTP is configured, prompt for 6-digit verification code
+      this.pendingRegistration = { name, email, password, phone, city };
+      this.showVerificationView(email);
       this.showToast(data.message || `${email} adresine doğrulama kodu gönderildi.`, 'info');
     } catch (err) {
       this.resetTurnstile();
