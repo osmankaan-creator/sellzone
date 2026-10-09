@@ -70,6 +70,7 @@ function initDatabase() {
       images TEXT NOT NULL,
       user_id INTEGER NOT NULL,
       status TEXT DEFAULT 'active',
+      old_price REAL,
       views INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -147,6 +148,12 @@ function initDatabase() {
 
   try {
     db.exec("ALTER TABLE messages ADD COLUMN offer_status TEXT DEFAULT 'pending';");
+  } catch (e) {
+    // Column already exists
+  }
+
+  try {
+    db.exec("ALTER TABLE products ADD COLUMN old_price REAL;");
   } catch (e) {
     // Column already exists
   }

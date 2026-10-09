@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=20261007_v3">
+  <link rel="stylesheet" href="style.css?v=20261009_v1">
   <!-- Cloudflare Turnstile (DDoS & Smart Bot Protection) -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
@@ -184,8 +184,13 @@
 
       <!-- Action Buttons (Sağ Üst Navigasyon ve Buton Grubu) -->
       <div class="header-actions">
-        <!-- Quick Nav Cluster: Favoriler & Mesajlar -->
+        <!-- Quick Nav Cluster: İlanlarım, Favoriler & Mesajlar -->
         <div class="header-nav-cluster">
+          <button class="header-nav-icon-btn" onclick="app.openMyListingsModal()" title="İlanlarım" id="headerListingsBtn">
+            <i class="fa-solid fa-box-archive"></i>
+            <span class="badge-counter" id="headerListingsBadge" style="display:none;">0</span>
+          </button>
+          
           <button class="header-nav-icon-btn" onclick="app.openFavoritesModal()" title="Favori İlanlarım" id="headerFavBtn">
             <i class="fa-solid fa-heart"></i>
             <span class="badge-counter" id="headerFavBadge" style="display:none;">0</span>
@@ -549,6 +554,106 @@
           <button type="button" class="btn btn-outline" onclick="app.closeNewProductModal()">Vazgeç</button>
           <button type="submit" class="btn btn-primary" id="btnPublishListing">
             <i class="fa-solid fa-check"></i> İlanı Hemen Yayınla
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 2.5. Edit Product Modal -->
+  <dialog id="editProductModal" class="app-dialog new-product-dialog">
+    <div class="dialog-content">
+      <button class="dialog-close-btn" onclick="app.closeEditProductModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="dialog-header">
+        <div class="header-icon-bubble" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1.5px solid rgba(59, 130, 246, 0.35);">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <div>
+          <h2>İlanı Düzenle</h2>
+          <p>İlan detaylarını, fiyatını veya durumunu güncelleyin.</p>
+        </div>
+      </div>
+
+      <form id="editProductForm" onsubmit="app.handleUpdateProduct(event)" class="new-product-form">
+        <input type="hidden" id="editProdId" value="">
+        
+        <div class="form-grid-2">
+          <!-- Title -->
+          <div class="form-group col-span-2">
+            <label for="editProdTitle" class="form-label">İlan Başlığı *</label>
+            <input type="text" id="editProdTitle" required placeholder="İlan başlığı">
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label for="editProdCategory" class="form-label">Kategori *</label>
+            <select id="editProdCategory" required></select>
+          </div>
+
+          <!-- Price -->
+          <div class="form-group">
+            <label for="editProdPrice" class="form-label">Fiyat (₺) *</label>
+            <div class="input-with-icon">
+              <input type="number" id="editProdPrice" required min="1" step="1" placeholder="Örn: 2500" oninput="app.checkEditPriceDrop(this.value)">
+              <span class="input-addon">₺</span>
+            </div>
+            <small id="editPriceDropHint" style="display:none; color: #10b981; font-weight: 600; margin-top: 4px;">
+              <i class="fa-solid fa-arrow-trend-down"></i> Fiyat düşürüldü: İlanda "Fiyatı Düştü" etiketi gösterilecek.
+            </small>
+          </div>
+
+          <!-- Condition -->
+          <div class="form-group">
+            <label for="editProdCondition" class="form-label">Kullanım Durumu *</label>
+            <select id="editProdCondition" required>
+              <option value="Yeni Gibi">Yeni Gibi (Kusursuz)</option>
+              <option value="Sıfır / Kutusunda">Sıfır / Kutusunda (Hiç Açılmamış)</option>
+              <option value="İyi Durumda">İyi Durumda (Normal kullanım izleri)</option>
+              <option value="Az Kullanılmış">Az Kullanılmış</option>
+              <option value="Tamir Gerektirir">Tamir Gerektirir / Parça Niyetine</option>
+            </select>
+          </div>
+
+          <!-- Status -->
+          <div class="form-group">
+            <label for="editProdStatus" class="form-label">İlan Durumu *</label>
+            <select id="editProdStatus" required>
+              <option value="active">Yayında (Aktif)</option>
+              <option value="sold">Satıldı</option>
+            </select>
+          </div>
+
+          <!-- City Selection -->
+          <div class="form-group">
+            <label for="editProdCity" class="form-label">
+              <i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:4px;"></i> Şehir (İl) *
+            </label>
+            <select id="editProdCity" required onchange="app.handleEditProdCityChange(this.value)">
+              <option value="">Şehir Seçiniz</option>
+            </select>
+          </div>
+
+          <!-- District Selection -->
+          <div class="form-group">
+            <label for="editProdDistrict" class="form-label">
+              <i class="fa-solid fa-map-pin" style="color:var(--primary); margin-right:4px;"></i> İlçe *
+            </label>
+            <select id="editProdDistrict" required>
+              <option value="">Önce Şehir Seçiniz</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="editProdDescription" class="form-label">Açıklama *</label>
+          <textarea id="editProdDescription" rows="4" required placeholder="Ürünün çalışma durumu, fatura ve garanti bilgisi vb. detayları yazınız..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="app.closeEditProductModal()">Vazgeç</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveEditedProduct">
+            <i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet
           </button>
         </div>
       </form>
@@ -1530,6 +1635,6 @@
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <!-- JavaScript -->
-  <script src="app.js?v=20261007_v3"></script>
+  <script src="app.js?v=20261009_v1"></script>
 </body>
 </html>

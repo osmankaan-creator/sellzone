@@ -1378,6 +1378,108 @@ app.post('/api/products', authenticate, upload.array('photos', 5), (req, res) =>
   }
 });
 
+// Get logged in user's own products
+app.get('/api/user/products', authenticate, (req, res) => {
+  try {
+    const { status } = req.query;
+    let sql = `
+      SELECT 
+        p.*,
+        c.name as category_name,
+        c.icon as category_icon,
+        c.color as category_color,
+        (SELECT COUNT(*) FROM favorites f WHERE f.product_id = p.id) as favorite_count
+      FROM products p
+      JOIN categories c ON p.category_id = c.id
+      WHERE p.user_id = ?
+    `;
+    const params = [req.user.id];
+
+    if (status) {
+      sql += ` AND p.status = ?`;
+      params.push(status);
+    }
+
+    sql += ` ORDER BY p.created_at DESC`;
+
+    const products = db.prepare(sql).all(...params);
+    const parsed = products.map(p => ({
+      ...p,
+      images: JSON.parse(p.images || '[]')
+    }));
+
+    res.json(parsed);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Edit product details
+app.put('/api/products/:id', authenticate, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, price, category_id, condition, location, status } = req.body;
+
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+    if (!product) {
+      return res.status(404).json({ error: 'İlan bulunamadı.' });
+    }
+    if (product.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Bu ilanı düzenleme yetkiniz yok.' });
+    }
+
+    if (!title || !description || price === undefined || !category_id || !condition || !location) {
+      return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun.' });
+    }
+
+    const newPrice = parseFloat(price);
+    if (isNaN(newPrice) || newPrice <= 0) {
+      return res.status(400).json({ error: 'Lütfen geçerli bir fiyat giriniz.' });
+    }
+
+    let oldPrice = product.old_price;
+
+    // Track price drop for discount badge
+    if (newPrice < product.price) {
+      oldPrice = product.price;
+    } else if (newPrice > product.price) {
+      oldPrice = null; // Price increased, reset discount badge
+    }
+
+    const newStatus = status && ['active', 'sold', 'passive'].includes(status) ? status : product.status;
+
+    db.prepare(`
+      UPDATE products 
+      SET title = ?, description = ?, price = ?, old_price = ?, category_id = ?, condition = ?, location = ?, status = ?
+      WHERE id = ?
+    `).run(
+      title.trim(),
+      description.trim(),
+      newPrice,
+      oldPrice,
+      category_id,
+      condition,
+      location.trim(),
+      newStatus,
+      id
+    );
+
+    res.json({
+      success: true,
+      message: 'İlan başarıyla güncellendi!',
+      product: {
+        id: Number(id),
+        title: title.trim(),
+        price: newPrice,
+        old_price: oldPrice,
+        status: newStatus
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Update product status (e.g. mark as sold or active)
 app.patch('/api/products/:id/status', authenticate, (req, res) => {
   try {
