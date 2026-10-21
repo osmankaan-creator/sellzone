@@ -1,8 +1,23 @@
 {
   "name": "sell-zone",
   "version": "1.0.0",
-  "description": "Sell Zone - Hızlı Sat, Akıllı Al | Modern İkinci El & Sıfır Pazaryeri",
+  "description": "Sell Zone - Full-Stack Modern İkinci El & Sıfır Pazaryeri Web Uygulaması (Portfolio & Open Source Showcase)",
   "main": "server.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/osmankaan-creator/sellzone.git"
+  },
+  "keywords": [
+    "marketplace",
+    "second-hand",
+    "nodejs",
+    "express",
+    "sqlite",
+    "spa",
+    "portfolio",
+    "open-source"
+  ],
   "engines": {
     "node": ">=22.0.0"
   },

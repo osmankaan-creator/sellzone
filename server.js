@@ -273,11 +273,10 @@ function isLocalhostRequest(req) {
   return host.includes('localhost') || host.includes('127.0.0.1') || ip === '127.0.0.1' || ip === '::1';
 }
 
-// Demo users endpoint (available on localhost for testing or if ENABLE_DEMO_USERS=true)
+// Demo users endpoint (enabled by default for portfolio & open-source showcase unless ENABLE_DEMO_USERS=false)
 app.get('/api/auth/demo-users', (req, res) => {
   try {
-    const isLocal = isLocalhostRequest(req);
-    if (!isLocal && process.env.ENABLE_DEMO_USERS !== 'true') {
+    if (process.env.ENABLE_DEMO_USERS === 'false') {
       return res.json([]);
     }
     const users = db.prepare('SELECT id, name, email, phone, avatar, city, rating FROM users LIMIT 10').all();
@@ -287,12 +286,11 @@ app.get('/api/auth/demo-users', (req, res) => {
   }
 });
 
-// Quick login for demo users (available on localhost for testing or if ENABLE_DEMO_USERS=true)
+// Quick login for demo users (enabled by default for portfolio & open-source showcase)
 app.post('/api/auth/quick-login', (req, res) => {
   try {
-    const isLocal = isLocalhostRequest(req);
-    if (!isLocal && process.env.ENABLE_DEMO_USERS !== 'true') {
-      return res.status(403).json({ error: 'Hızlı test girişi canlı ortamda devre dışıdır. Yalnızca localhost üzerinde kullanılabilir.' });
+    if (process.env.ENABLE_DEMO_USERS === 'false') {
+      return res.status(403).json({ error: 'Demo girişi devre dışıdır.' });
     }
     const { userId } = req.body;
     const user = db.prepare('SELECT id, name, email, phone, avatar, city, rating, bio, created_at FROM users WHERE id = ?').get(userId);
